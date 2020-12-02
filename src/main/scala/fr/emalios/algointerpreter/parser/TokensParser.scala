@@ -16,29 +16,29 @@ class TokensParser extends Parsers {
   }
 
   private def parseUnary: Parser[Expression] = {
-    (Not ~ ) ^^ { case a ~ b => UnaryExpression(a, b) }
+    ( (operator("non") | operator("-") ) ~ parseExpression) ^^ { case operator ~ expression => UnaryOperation(operator, expression) }
+  }
+
+  private def parseBinary: Parser[Expression] = {
+    ( parseExpression ~ (
+          operator("-") |
+          operator("+") |
+          operator("mod") |
+          operator("/") |
+          operator("%") |
+          operator(">") |
+          operator(">=") |
+          operator("<") |
+          operator("<=") |
+          operator("=") |
+          operator("*") |
+          operator("et") |
+          operator("ou")) ~ parseExpression) ^^ { case left ~ operator ~ right => BinaryOperation(left, operator, right) }
   }
 
   private def parseExpression(): Parser[Expression] = {
-    parseLiteral | parseUnary
+    parseLiteral | parseUnary | parseBinary
   }
-
-  /*
-  private def parseIfThenElseInstruction: Parser[parser.IfThenElseInstruction] = {
-      If ~ expression ~ Then ~ Block ^^ { case _ ~ condition ~ _ ~ thenBlock ~ _ ~ elseBlock => IfThenElseInstruction(condition, thenBlock, elseBlock)
-  }
-
-   */
-
-
-
-  /*
-  def parseExpression: Parser[Expression] = {
-    parseLiteral ^^ { case id @ parser.Literal(_) => id} |
-
-  }
-
-   */
 
   def keyword(kw: String): Parser[Token] =
     accept(kw, {
@@ -50,15 +50,11 @@ class TokensParser extends Parsers {
       // ...
     })
 
-  /*
-  def apply(tokens: Seq[Token]): Either[AlgoLexerError, AlgoAST] = {
-    val reader = new TokenReader(tokens)
-    parse(keyword(), reader) match {
-      case NoSuccess(msg, next) => Left(AlgoLexerError(msg))
-      case Success(result, next) => Right(result)
-    }
-  }
-
-   */
+  def operator(kw: String): Parser[Operator] =
+    accept(kw, {
+      case (Not) => Not
+      case (Minus) => Minus
+      // ...
+    })
 
 }
