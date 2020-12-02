@@ -1,0 +1,33 @@
+bloc        → { instruction } ;
+
+instruction → affectation
+            | 'si' condition 'alors' bloc ['sinon' bloc]
+            | iteration ;
+
+condition   → expression ;
+
+affectation → var '<-' expression ;
+
+expression  → literale
+            | unaire
+            | binaire
+            | groupe ;
+
+literale    → number | string | 'vrai' | 'faux';
+groupe      → '(' expression ')' ;
+unaire      → ( "-" | "non" ) expression ;
+binaire     → expression operateur expression ;
+operateur   → '+'
+            | '-'
+            | '*'
+            | 'et'
+            | 'ou'
+            | '<'
+            | '>'
+            | '='
+            | '<='
+            | '>='
+            | 'mod'
+            | '!='
+            | '/'
+            | '%' ;
