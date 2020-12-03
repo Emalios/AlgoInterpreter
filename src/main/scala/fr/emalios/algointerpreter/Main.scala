@@ -8,8 +8,11 @@ object Main extends AlgoLexer {
 
   def main(args: Array[String]): Unit = {
     val lexer:AlgoLexer = new AlgoLexer
-    val tokens = lexer.apply("Debut\n    somme <- 0\n    Pour i de 1 a 10 faire\n        valeur <- lire()\n        somme <- somme + valeur\n    fpour\n    ecrire(somme)\nFin")
-    println(tokens)
+    val tokens = lexer.apply("Debut\n    somme <- 0\n    Pour i de 1 a 10 faire\n        valeur <- 5\n        somme <- somme + valeur\n    fpour\n Fin")
+    println(tokens + "\n")
+    val parser: TokensParser = new TokensParser
+    val ast = parser.apply(tokens.right.get)
+    println(ast)
   }
 
 }

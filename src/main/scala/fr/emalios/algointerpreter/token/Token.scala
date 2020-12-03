@@ -43,9 +43,9 @@ package fr.emalios.algointerpreter.token
 
   case object Minus extends Operator
 
-  case object PLUS extends Operator
+  case object Plus extends Operator
 
-  case object AFFECTATION extends Operator
+  case object Affectation extends Operator
 
   case object GREATER_EQUAL extends Operator
 
@@ -57,7 +57,7 @@ package fr.emalios.algointerpreter.token
 
   case object EQUALS extends Operator
 
-  case object SLASH extends Operator
+  case object Slash extends Operator
 
   case object PERCENT extends Operator
 

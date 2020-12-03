@@ -81,7 +81,7 @@ class AlgoLexer extends RegexParsers {
    * @return parser which associates a token with to its literal value.
    */
   def operator: Parser[Operator] = {
-    "<-" ^^ {_ => AFFECTATION} | "=" ^^ {_ => EQUALS} | "(" ^^ {_ => RightParen} | ")" ^^ { _ => LeftParen} | "+" ^^ { _ => PLUS}
+    "<-" ^^ {_ => Affectation} | "=" ^^ { _ => EQUALS} | "(" ^^ { _ => RightParen} | ")" ^^ { _ => LeftParen} | "+" ^^ { _ => Plus}
   }
 
   /**

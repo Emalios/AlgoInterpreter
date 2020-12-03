@@ -1,12 +1,13 @@
 bloc        → { instruction } ;
 
 instruction → affectation
-            | 'si' condition 'alors' bloc ['sinon' bloc]
-            | iteration ;
+            | 'si' condition 'alors' bloc ['sinon' bloc] 'fsi'
+            | 'pour' identifier 'de' expression 'a' expression 'faire' bloc 'fpour'
+            | 'tantque' condition 'faire' bloc 'ftant';
 
 condition   → expression ;
 
-affectation → var '<-' expression ;
+affectation → identifieur '<-' expression ;
 
 expression  → literale
             | unaire
