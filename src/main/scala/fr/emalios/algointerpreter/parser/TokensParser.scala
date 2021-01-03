@@ -62,7 +62,7 @@ class TokensParser extends Parsers {
 
   private def parseExpression: Parser[Expression] = {
     println("try to parse expression")
-    parseUnary | parseBinary | parseLiteral | parseGrouping
+    parseUnary | parseBinary | parseLiteral | parseGrouping <~ EndOfLine
   }
 
   /*
@@ -82,7 +82,7 @@ class TokensParser extends Parsers {
 
    */
 
-  private def parseBlock(startDelimiter: Token, endDelimiter: Token): Parser[Block] = {
+  private def parseBlock(startDelimiter: Parser[Token], endDelimiter: Parser[Token]): Parser[Block] = {
     startDelimiter ~> rep1(parseInstruction) <~ endDelimiter ^^ Block
   }
 
@@ -95,7 +95,7 @@ class TokensParser extends Parsers {
   }
 
   private def parseAlgo: Parser[Algo] = {
-    phrase(parseBlock(Start, End)) ^^ Algo
+    phrase(parseBlock(Start <~ EndOfLine, EndOfLine ~> End)) ^^ Algo
   }
 
   def apply(tokens: Seq[Token]): Algo = {

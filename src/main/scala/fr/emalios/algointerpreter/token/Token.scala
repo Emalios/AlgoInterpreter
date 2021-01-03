@@ -38,6 +38,8 @@ package fr.emalios.algointerpreter.token
 
   case object RightParen extends Token
 
+case object EndOfLine extends Token
+
   case object LeftParen extends Token
 
   case object RIGHT_BOX_BRACKET extends Token

@@ -20,7 +20,7 @@ class AlgoLexer extends RegexParsers {
    * Redefinition of the regex which matches the characters that we want to pass,
    * here we want to ignore all the whitespaces because in algo we don't care about whitespaces.
    */
-  override val whiteSpace: Regex = "[ \n\t\r\f]+".r
+  override val whiteSpace: Regex = "[^\\S\r\n]".r
 
   /**
    * The value is matched here if it starts with a '"' and finish by '"'.
@@ -78,7 +78,9 @@ class AlgoLexer extends RegexParsers {
    * @return parser which associates a value which is matched by the regex with a Token which wraps this value.
    */
   def identifierOrKeyword: Parser[Token] = {
-    "[a-zA-Z_][a-zA-Z0-9_]*".r ^^ { str => if (keywords.contains(str)) keywords(str) else Identifier(str) }
+    "[a-zA-Z_][a-zA-Z0-9_]*".r ^^ { str =>
+      if (keywords.contains(str)) keywords(str) else Identifier(str)
+    } | "\r?\n".r ^^ { _ => EndOfLine }
   }
 
   /** TODO: rewrite

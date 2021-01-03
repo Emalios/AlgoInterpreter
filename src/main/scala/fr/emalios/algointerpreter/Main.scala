@@ -12,7 +12,7 @@ object Main extends AlgoLexer {
 
   def main(args: Array[String]): Unit = {
     val lexer:AlgoLexer = new AlgoLexer
-    val tokens = lexer.apply("Debut x <- 5 y <- x*x Fin")
+    val tokens = lexer.apply("Debut \n x <- 5 \n Fin")
     println(tokens)
     val parser: TokensParser = new TokensParser
     val ast = parser.apply(tokens)
