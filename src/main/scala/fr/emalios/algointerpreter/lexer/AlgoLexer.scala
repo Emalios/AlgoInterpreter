@@ -88,14 +88,14 @@ class AlgoLexer extends RegexParsers {
    */
   def operator: Parser[Token] = {
     (
-      "<-" ^^ { _ => Affectation }
-      | "=" ^^ { _ => Equals }
-      | "(" ^^ { _ => RightParen }
-      | ")" ^^ { _ => LeftParen }
-      | "+" ^^ { _ => Plus }
-      | "-" ^^ { _ => Minus }
-      | "*" ^^ { _ => Mul}
-      | "/" ^^ { _ => Slash}
+      "<-" ^^^ Affectation
+      | "=" ^^^ Equals
+      | "(" ^^^ LeftParen
+      | ")" ^^^ RightParen
+      | "+" ^^^ Plus
+      | "-" ^^^ Minus
+      | "*" ^^^ Mul
+      | "/" ^^^ Slash
       )
   }
 

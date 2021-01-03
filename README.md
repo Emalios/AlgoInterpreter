@@ -7,8 +7,8 @@ It will also have a complete and precise graphical debugger.
 ## Current and planned features:
 
 + [X] Simple calculations without operating priorities
-  + [ ] Operating priority system
-  + [ ] Complex calculations
+  + [X] Operating priority system
+  + [X] Complex calculations
     
 
 + [X] Debugger in console
