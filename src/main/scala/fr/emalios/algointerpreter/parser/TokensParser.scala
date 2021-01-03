@@ -40,7 +40,7 @@ class TokensParser extends Parsers {
 
   private def parseBinary: Parser[Expression] = {
     println("try to parse binary")
-    chainl1(chainl1(parseGrouping | parseUnary | parseLiteral | parseBinary, parseMultiplication), parseAddition | parseSubtraction)
+    chainl1(chainl1(parseGrouping | parseUnary | parseLiteral | parseIdentifier | parseBinary, parseMultiplication), parseAddition | parseSubtraction)
   }
 
   private def parseAddition: Parser[(Expression, Expression) => BinaryOperation] = {

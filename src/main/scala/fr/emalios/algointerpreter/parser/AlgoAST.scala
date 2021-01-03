@@ -17,4 +17,4 @@ case class UnaryOperation(operator: Token, right: Expression) extends Expression
 case class StringLiteral(value: String) extends Literal
 case class Number(value: Int) extends Literal
 case class BooleanLiteral(value: String) extends Literal
-case class Identifier(value: String) extends AlgoAST
+case class Identifier(value: String) extends Expression

@@ -8,7 +8,7 @@ import scala.collection.mutable
 
 class ASTEvaluator {
 
-  private val env = new mutable.HashMap[Identifier, Object]()
+  private val env = new mutable.HashMap[Identifier, Literal]()
 
   def printEnv(): Unit = {
     printDelimiter(16)
@@ -57,6 +57,15 @@ class ASTEvaluator {
             case right: Number => Number(left.value * right.value)
           }
         }
+      }
+      case identifier: Identifier => {
+        if (this.env.contains(identifier)) this.env.get(identifier) match {
+          case Some(value) => value match {
+            case StringLiteral(value) => StringLiteral(value)
+            case Number(value) => Number(value)
+            case BooleanLiteral(value) => BooleanLiteral(value)
+          }
+        } else throw AlgoEvaluationError("Identifier: " + identifier + " doesn't exist in current scope.")
       }
       case literal: Literal => literal match {
         case StringLiteral(value) => StringLiteral(value)
