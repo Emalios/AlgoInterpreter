@@ -1,13 +1,16 @@
 package fr.emalios.algointerpreter.token
 
   sealed trait Token
-  sealed trait Operator extends Token
+
+  sealed trait Literal extends Token
 
   case class Identifier(str: String) extends Token
 
-  case class Literal(str: String) extends Token
+  case class IntegerToken(number: Int) extends Literal
 
-  case class Number(number: Int) extends Token
+  case class StringToken(value: String) extends Literal
+
+  case class BooleanToken(value: String) extends Literal
 
   case object Start extends Token
 
@@ -33,41 +36,41 @@ package fr.emalios.algointerpreter.token
 
   case object Dot extends Token
 
-  case object RightParen extends Operator
+  case object RightParen extends Token
 
-  case object LeftParen extends Operator
+  case object LeftParen extends Token
 
   case object RIGHT_BOX_BRACKET extends Token
 
   case object LEFT_BOX_BRACKET extends Token
 
-  case object Minus extends Operator
+  case object Minus extends Token
 
-  case object Plus extends Operator
+  case object Plus extends Token
 
-  case object Affectation extends Operator
+  case object Affectation extends Token
 
-  case object GREATER_EQUAL extends Operator
+  case object GREATER_EQUAL extends Token
 
-  case object LESSER_EQUAL extends Operator
+  case object LESSER_EQUAL extends Token
 
-  case object LESSER extends Operator
+  case object LESSER extends Token
 
-  case object GREATER extends Operator
+  case object GREATER extends Token
 
-  case object EQUALS extends Operator
+  case object Equals extends Token
 
-  case object Slash extends Operator
+  case object Slash extends Token
 
-  case object PERCENT extends Operator
+  case object PERCENT extends Token
 
-  case object MUL extends Operator
+  case object Mul extends Token
 
-  case object TRUE extends Token
+  case object True extends Token
 
-  case object FALSE extends Token
+  case object False extends Token
 
-  case object RETURN extends Token
+  case object Return extends Token
 
   case object AND extends Token
 
@@ -83,10 +86,10 @@ package fr.emalios.algointerpreter.token
 
   case object Else extends Token
 
-  case object Not extends Operator
+  case object Not extends Token
 
-  case object NotEquals extends Operator
+  case object NotEquals extends Token
 
-  case object Mod extends Operator
+  case object Mod extends Token
   case object Do extends Token
 

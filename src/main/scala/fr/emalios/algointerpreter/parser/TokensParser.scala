@@ -1,18 +1,32 @@
 package fr.emalios.algointerpreter.parser
 
-import fr.emalios.algointerpreter.Main.keywords
-import fr.emalios.algointerpreter.lexer.AlgoLexerError
 import fr.emalios.algointerpreter.{parser, token}
 import fr.emalios.algointerpreter.token._
 
-import scala.util.parsing.combinator.{Parsers, RegexParsers}
+import scala.util.parsing.combinator.Parsers
 
 class TokensParser extends Parsers {
 
   override type Elem = Token
 
+  private def parseString: Parser[parser.Literal] = {
+    println("try to parse string")
+    accept("string literal", { case string @ token.StringToken(value) => parser.StringLiteral(value) })
+  }
+
+  private def parseInteger: Parser[parser.Literal] = {
+    println("try to parse integer")
+    accept("integer literal", { case integer @ token.IntegerToken(value) => parser.Number(value) })
+  }
+
+  private def parseBoolean: Parser[parser.Literal] = {
+    println("try to parse boolean")
+    accept("boolean literal", { case boolean @ token.BooleanToken(value) => parser.BooleanLiteral(value)})
+  }
+
   private def parseLiteral: Parser[Expression] = {
-    accept("literal expression", { case literal @ token.Literal(name) => parser.Literal(name) })
+    println("try to parse literal")
+    parseString | parseInteger | parseBoolean
   }
 
   private def parseIdentifier: Parser[parser.Identifier] = {
@@ -20,28 +34,37 @@ class TokensParser extends Parsers {
   }
 
   private def parseUnary: Parser[Expression] = {
-    ( (operator("non") | operator("-") ) ~ parseExpression) ^^ { case operator ~ expression => UnaryOperation(operator, expression) }
+    println("try to parse unary")
+    ( (Not | Minus ) ~ parseExpression) ^^ { case operator ~ expression => UnaryOperation(operator, expression) }
   }
 
   private def parseBinary: Parser[Expression] = {
-    ( parseExpression ~ (
-          operator("-") |
-          operator("+") |
-          operator("mod") |
-          operator("/") |
-          operator("%") |
-          operator(">") |
-          operator(">=") |
-          operator("<") |
-          operator("<=") |
-          operator("=") |
-          operator("*") |
-          operator("et") |
-          operator("ou")) ~ parseExpression) ^^ { case left ~ operator ~ right => BinaryOperation(left, operator, right) }
+    println("try to parse binary")
+    chainl1(parseLiteral | parseUnary | parseBinary | parseGrouping,
+      parseMultiplication | parseAddition | parseSubtraction
+      )
+  }
+
+  private def parseAddition: Parser[(Expression, Expression) => BinaryOperation] = {
+    Plus ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Plus, right) } }
+  }
+
+  private def parseSubtraction: Parser[(Expression, Expression) => BinaryOperation] = {
+    Minus ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Minus, right) } }
+  }
+
+  private def parseMultiplication: Parser[(Expression, Expression) => BinaryOperation] = {
+    Mul ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Mul, right) } }
+  }
+
+  private def parseGrouping: Parser[Expression] = {
+    println("try to parse grouping")
+    LeftParen ~ parseExpression ~ RightParen ^^ { case _ ~ expression ~ _ => expression }
   }
 
   private def parseExpression: Parser[Expression] = {
-    parseLiteral | parseUnary | parseBinary
+    println("try to parse expression")
+    parseUnary | parseBinary | parseLiteral
   }
 
   /*
@@ -54,10 +77,12 @@ class TokensParser extends Parsers {
   }
 
    */
-
+  /*
   private def parseForInstruction: Parser[Instruction] = {
     ( For ~ parseIdentifier ~ From ~ parseExpression ~ To ~ parseExpression ~ parseBlock(Do, EndFor) ) ^^ { case _ ~ identifier ~ _ ~ expressionFrom ~ _ ~ expressionTo ~ block => ForInstruction(identifier, expressionFrom, expressionTo, block)}
   }
+
+   */
 
   private def parseBlock(startDelimiter: Token, endDelimiter: Token): Parser[Block] = {
     startDelimiter ~> rep1(parseInstruction) <~ endDelimiter ^^ Block
@@ -68,41 +93,14 @@ class TokensParser extends Parsers {
   }
 
   private def parseInstruction: Parser[Instruction] = {
-    /*parseIfThenInstruction() | parseIfThenElseInstruction() | */parseForInstruction | parseAffectation
+    /*parseIfThenInstruction() | parseIfThenElseInstruction() | parseForInstruction  | */ parseAffectation
   }
 
-  private def parseAlgo: Parser[AlgoAST] = {
-    (phrase(parseBlock(Start, End))) ^^ Algo
+  private def parseAlgo: Parser[Algo] = {
+    phrase(parseBlock(Start, End)) ^^ Algo
   }
 
-  def keyword(kw: String): Parser[Token] =
-    accept(kw, {
-      case (Start) => Start
-      case (End) => End
-      case (For) => For
-      case (From) => From
-      case (To) => To
-      case (Affectation) => Affectation
-      case EndIf => EndIf
-      case EndFor => EndFor
-      case While => While
-      case EndWhile => EndWhile
-      case RightParen => RightParen
-      case LeftParen => LeftParen
-      // ...
-    })
-
-  def operator(kw: String): Parser[Operator] =
-    accept(kw, {
-      case (Not) => Not
-      case (Minus) => Minus
-      case Plus => Plus
-      case Minus => Minus
-      case Slash => Slash
-      // ...
-    })
-
-  def apply(tokens: Seq[Token]): AlgoAST = {
+  def apply(tokens: Seq[Token]): Algo = {
     val reader = new TokenReader(tokens)
     parseAlgo.apply(reader) match {
       case NoSuccess(msg, _) => println(msg); null
