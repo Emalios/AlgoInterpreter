@@ -1,5 +1,5 @@
 package fr.emalios.algointerpreter.eval
 
-case class AlgoEvaluationError(msg: String) extends Error {
+case class AlgoEvaluationError(msg: String) extends Error(msg: String) {
 
 }

@@ -16,5 +16,7 @@ case class BinaryOperation(leftExpression: Expression, operator: Token, rightExp
 case class UnaryOperation(operator: Token, right: Expression) extends Expression
 case class StringLiteral(value: String) extends Literal
 case class Number(value: Int) extends Literal
-case class BooleanLiteral(value: String) extends Literal
+case class BooleanLiteral(value: Boolean) extends Literal
 case class Identifier(value: String) extends Expression
+case class FunctionCall(functionName: Identifier, args: List[Expression]) extends Expression
+case class ExprInstr(e: Expression) extends Instruction

@@ -2,8 +2,8 @@ package fr.emalios.algointerpreter
 
 import fr.emalios.algointerpreter.eval.ASTEvaluator
 import fr.emalios.algointerpreter.lexer.AlgoLexer
-import fr.emalios.algointerpreter.parser.{Affectation, BinaryOperation, BooleanLiteral, BooleanValue, Expression, Identifier, Instruction, IntegerValue, Literal, Number, StringLiteral, StringValue, TokensParser, UnaryOperation, Value}
-import fr.emalios.algointerpreter.token.{AND, Comma, Do, Dot, Else, End, EndFor, EndIf, EndWhile, Equals, False, For, From, GREATER, GREATER_EQUAL, If, LEFT_BOX_BRACKET, LESSER, LESSER_EQUAL, LeftParen, Mul, Minus, Mod, Not, NotEquals, OR, PERCENT, Plus, RIGHT_BOX_BRACKET, ReadInput, Return, RightParen, Slash, Start, StartLoop, Then, To, True, While}
+import fr.emalios.algointerpreter.parser.{Affectation, BinaryOperation, BooleanLiteral, Expression, Identifier, Instruction, Literal, Number, StringLiteral, TokensParser, UnaryOperation}
+import fr.emalios.algointerpreter.token.{And, Comma, Do, Dot, Else, End, EndFor, EndIf, EndWhile, Equals, False, For, From, Greater, GreaterEqual, If, LEFT_BOX_BRACKET, Lesser, LesserEqual, LeftParen, Mul, Minus, Mod, Not, NotEquals, Or, PERCENT, Plus, RIGHT_BOX_BRACKET, Return, RightParen, Slash, Start, StartLoop, Then, To, True, While}
 
 import scala.collection.mutable
 
@@ -12,7 +12,7 @@ object Main extends AlgoLexer {
 
   def main(args: Array[String]): Unit = {
     val lexer:AlgoLexer = new AlgoLexer
-    val tokens = lexer.apply("Debut \n x <- 5 \n Fin")
+    val tokens = lexer.apply("Debut\n x <- 5 \n ecrire(x+5 = 8) \n Fin")
     println(tokens)
     val parser: TokensParser = new TokensParser
     val ast = parser.apply(tokens)
@@ -24,9 +24,9 @@ object Main extends AlgoLexer {
       i+=1
       scanner.nextLine()
       evaluator.addInstructionToEnv(instruction)
-      evaluator.printEnv()
+      //evaluator.printEnv()
     })
-    println(ast)
+    //println(ast)
   }
 
 }

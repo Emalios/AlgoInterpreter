@@ -48,11 +48,15 @@ class AlgoLexer extends RegexParsers {
 
   val keywords: immutable.HashMap[String, Token] = immutable.HashMap(
     "Fin" -> End,
+    "entier" -> IntegerType,
+    "reel" -> RealType,
+    "chaine" -> StringType,
+    "char" -> CharType,
     "Debut" -> Start,
     "si" -> If,
     "fsi" -> EndIf,
-    "et" -> AND,
-    "ou" -> OR,
+    "et" -> And,
+    "ou" -> Or,
     "Pour" -> For,
     "de" -> From,
     "a" -> To,
@@ -66,8 +70,8 @@ class AlgoLexer extends RegexParsers {
     "mod" -> Mod,
     "retourne" -> Return,
     "non" -> Not,
-    "vrai" -> BooleanToken("vrai"),
-    "faux" -> BooleanToken("faux")
+    "vrai" -> BooleanToken(true),
+    "faux" -> BooleanToken(false)
   )
 
   /**
@@ -82,6 +86,16 @@ class AlgoLexer extends RegexParsers {
       if (keywords.contains(str)) keywords(str) else Identifier(str)
     } | "\r?\n".r ^^ { _ => EndOfLine }
   }
+/*
+  private def functionCall: Parser[Token] = {
+    identifierOrKeyword ~ args
+  }
+
+  private def args: Parser[Token] = {
+
+  }
+
+ */
 
   /** TODO: rewrite
    * As we have a finite list of tokens, we assign each token to its literal value
@@ -98,6 +112,12 @@ class AlgoLexer extends RegexParsers {
       | "-" ^^^ Minus
       | "*" ^^^ Mul
       | "/" ^^^ Slash
+      | "<" ^^^ Lesser
+      | ">" ^^^ Greater
+      | "<=" ^^^ LesserEqual
+      | ">=" ^^^ GreaterEqual
+      | "et" ^^^ And
+      | "ou" ^^^ Or
       )
   }
 
@@ -106,7 +126,7 @@ class AlgoLexer extends RegexParsers {
    * @return a set of tokens
    */
   def tokens: Parser[List[Token]] = {
-    phrase(rep1(operator | identifierOrKeyword | number))
+    phrase(rep1(operator |identifierOrKeyword | number))
   }
 
   def apply(code: String): List[Token] = {

@@ -40,7 +40,11 @@ class TokensParser extends Parsers {
 
   private def parseBinary: Parser[Expression] = {
     println("try to parse binary")
-    chainl1(chainl1(parseGrouping | parseUnary | parseLiteral | parseIdentifier | parseBinary, parseMultiplication), parseAddition | parseSubtraction)
+    chainl1(chainl1(chainl1(parseGrouping | parseUnary | parseLiteral | parseIdentifier | parseBinary, parseMultiplication | parseBooleanExpr), parseAddition | parseSubtraction), parseEquality)
+  }
+
+  private def parseBooleanExpr: Parser[(Expression, Expression) => BinaryOperation] = {
+    parseAnd | parseOr | parseLesser | parseLesserEquals | parseGreater | parseGreaterEquals
   }
 
   private def parseAddition: Parser[(Expression, Expression) => BinaryOperation] = {
@@ -55,6 +59,48 @@ class TokensParser extends Parsers {
     Mul ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Mul, right) } }
   }
 
+  private def parseEquality: Parser[(Expression, Expression) => BinaryOperation] = {
+    Equals ^^^ { (left: Expression, right: Expression) => (left, right) match {
+      case (left: Expression, right: Expression) => BinaryOperation(left, Equals, right)
+    }}
+  }
+
+  private def parseAnd: Parser[(Expression, Expression) => BinaryOperation] = {
+    And ^^^ { (left: Expression, right: Expression) => (left, right) match {
+      case (left: Expression, right: Expression) => BinaryOperation(left, And, right)
+    }}
+  }
+
+  private def parseOr: Parser[(Expression, Expression) => BinaryOperation] = {
+    Or ^^^ { (left: Expression, right: Expression) => (left, right) match {
+      case (left: Expression, right: Expression) => BinaryOperation(left, Or, right)
+    }}
+  }
+
+  private def parseLesser: Parser[(Expression, Expression) => BinaryOperation] = {
+    Lesser ^^^ { (left: Expression, right: Expression) => (left, right) match {
+      case (left: Expression, right: Expression) => BinaryOperation(left, Lesser, right)
+    }}
+  }
+
+  private def parseLesserEquals: Parser[(Expression, Expression) => BinaryOperation] = {
+    LesserEqual ^^^ { (left: Expression, right: Expression) => (left, right) match {
+      case (left: Expression, right: Expression) => BinaryOperation(left, LesserEqual, right)
+    }}
+  }
+
+  private def parseGreater: Parser[(Expression, Expression) => BinaryOperation] = {
+    Greater ^^^ { (left: Expression, right: Expression) => (left, right) match {
+      case (left: Expression, right: Expression) => BinaryOperation(left, Greater, right)
+    }}
+  }
+
+  private def parseGreaterEquals: Parser[(Expression, Expression) => BinaryOperation] = {
+    GreaterEqual ^^^ { (left: Expression, right: Expression) => (left, right) match {
+      case (left: Expression, right: Expression) => BinaryOperation(left, GreaterEqual, right)
+    }}
+  }
+
   private def parseGrouping: Parser[Expression] = {
     println("try to parse grouping")
     LeftParen ~ parseExpression ~ RightParen ^^ { case _ ~ expression ~ _ => expression }
@@ -62,7 +108,22 @@ class TokensParser extends Parsers {
 
   private def parseExpression: Parser[Expression] = {
     println("try to parse expression")
-    parseUnary | parseBinary | parseLiteral | parseGrouping <~ EndOfLine
+    parseFunctionCall | parseUnary | parseBinary | parseLiteral | parseGrouping
+  }
+
+  private def parseExprFunctionCall: Parser[ExprInstr] = {
+    println("try to parse expr function")
+    (parseIdentifier ~ parseArgs) ^^ { case identifier ~ args => ExprInstr(FunctionCall(identifier, args))}
+  }
+
+  private def parseFunctionCall: Parser[FunctionCall] = {
+    println("try to parse function")
+    (parseIdentifier ~ parseArgs) ^^ { case identifier ~ args => FunctionCall(identifier, args)}
+  }
+
+  private def parseArgs: Parser[List[Expression]] = {
+    println("try to parse args")
+    rep1(LeftParen ~> parseExpression <~ (Comma | RightParen))
   }
 
   /*
@@ -91,11 +152,15 @@ class TokensParser extends Parsers {
   }
 
   private def parseInstruction: Parser[Instruction] = {
-    /*parseIfThenInstruction() | parseIfThenElseInstruction() | parseForInstruction  | */ parseAffectation
+    /*parseIfThenInstruction() | parseIfThenElseInstruction() | parseForInstruction  | */ (parseExprFunctionCall | parseAffectation) <~ EndOfLine
   }
 
   private def parseAlgo: Parser[Algo] = {
-    phrase(parseBlock(Start <~ EndOfLine, EndOfLine ~> End)) ^^ Algo
+    phrase(parseBlock(Start <~ parseEndOfLine, End)) ^^ Algo
+  }
+
+  private def parseEndOfLine: Parser[Token] = {
+    rep1(EndOfLine) ^^^ EndOfLine
   }
 
   def apply(tokens: Seq[Token]): Algo = {

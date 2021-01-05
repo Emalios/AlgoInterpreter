@@ -7,13 +7,16 @@ package fr.emalios.algointerpreter.token
   case class Identifier(str: String) extends Token
 
   case class IntegerToken(number: Int) extends Literal
+  case object IntegerType extends Token
+  case object StringType extends Token
+  case object CharType extends Token
+  case object RealType extends Token
 
   case class StringToken(value: String) extends Literal
 
-  case class BooleanToken(value: String) extends Literal
+  case class BooleanToken(value: Boolean) extends Literal
 
   case object Start extends Token
-
   case object End extends Token
 
   case object If extends Token
@@ -30,15 +33,13 @@ package fr.emalios.algointerpreter.token
 
   case object Function extends Token
 
-  case object ReadInput extends Token
-
   case object Comma extends Token
 
   case object Dot extends Token
 
   case object RightParen extends Token
 
-case object EndOfLine extends Token
+  case object EndOfLine extends Token
 
   case object LeftParen extends Token
 
@@ -52,13 +53,13 @@ case object EndOfLine extends Token
 
   case object Affectation extends Token
 
-  case object GREATER_EQUAL extends Token
+  case object GreaterEqual extends Token
 
-  case object LESSER_EQUAL extends Token
+  case object LesserEqual extends Token
 
-  case object LESSER extends Token
+  case object Lesser extends Token
 
-  case object GREATER extends Token
+  case object Greater extends Token
 
   case object Equals extends Token
 
@@ -74,9 +75,9 @@ case object EndOfLine extends Token
 
   case object Return extends Token
 
-  case object AND extends Token
+  case object And extends Token
 
-  case object OR extends Token
+  case object Or extends Token
 
   case object StartLoop extends Token
 
