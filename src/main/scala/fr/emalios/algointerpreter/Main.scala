@@ -10,23 +10,24 @@ import scala.collection.mutable
 
 object Main extends AlgoLexer {
 
+  val debugMode = false
+
   def main(args: Array[String]): Unit = {
     val lexer:AlgoLexer = new AlgoLexer
-    val tokens = lexer.apply("Debut\n x <- 5 \n ecrire(x+5 = 8) \n Fin")
-    println(tokens)
+    val tokens = lexer.apply("Debut\n ecrire(\"Veuillez entrer une valeur quelconque\") \n x <- lire() \n ecrire(x) \n Fin")
+    if (debugMode) println(tokens)
     val parser: TokensParser = new TokensParser
     val ast = parser.apply(tokens)
-    val scanner = new java.util.Scanner(System.in)
     var i: Int = 1
     val evaluator = new ASTEvaluator
     ast.block.instructions.foreach(instruction => {
-      println("Press enter to display actual environment " + "instruction (" + i + ")")
+      //println("Press enter to display actual environment " + "instruction (" + i + ")")
       i+=1
-      scanner.nextLine()
+      //scanner.nextLine()
       evaluator.addInstructionToEnv(instruction)
-      //evaluator.printEnv()
+      if (debugMode) evaluator.printEnv()
     })
-    //println(ast)
+    if(debugMode) println(ast)
   }
 
 }

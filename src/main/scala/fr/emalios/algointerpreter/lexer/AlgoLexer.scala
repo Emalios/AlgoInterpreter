@@ -1,6 +1,7 @@
 package fr.emalios.algointerpreter.lexer
 
 import fr.emalios.algointerpreter.parser.StringLiteral
+import fr.emalios.algointerpreter.token
 import fr.emalios.algointerpreter.token._
 
 import scala.collection.immutable
@@ -30,7 +31,8 @@ class AlgoLexer extends RegexParsers {
    * @return parser which associates a value which is matched by the regex with a Token which wraps this value.
    */
   def literal: Parser[StringToken] = {
-    """"[^"]*"""".r ^^ { str => StringToken(str.drop(1).dropRight(1)) }
+    """"[^"]*"""".r ^^ { str => val content = str.substring(1, str.length - 1)
+      token.StringToken(content) }
   }
 
   /**
@@ -47,6 +49,7 @@ class AlgoLexer extends RegexParsers {
   }
 
   val keywords: immutable.HashMap[String, Token] = immutable.HashMap(
+    "," -> Comma,
     "Fin" -> End,
     "entier" -> IntegerType,
     "reel" -> RealType,
@@ -126,7 +129,7 @@ class AlgoLexer extends RegexParsers {
    * @return a set of tokens
    */
   def tokens: Parser[List[Token]] = {
-    phrase(rep1(operator |identifierOrKeyword | number))
+    phrase(rep1(operator | identifierOrKeyword | literal | number))
   }
 
   def apply(code: String): List[Token] = {

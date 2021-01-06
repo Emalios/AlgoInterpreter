@@ -16,7 +16,7 @@ It will also have a complete and precise graphical debugger.
 + [ ] Great error messages
     
 
-+ [ ] Variables
++ [X] Variables
   + [ ] Type inference system
 
 
@@ -25,6 +25,7 @@ It will also have a complete and precise graphical debugger.
     + [ ] While
  
 
-+ [ ] Builtin functions
-    + [ ] Read/Write 
++ [X] Builtin functions
+    + [X] Read/Write 
     + [ ] String functions
++ [ ] Support for custom functions  

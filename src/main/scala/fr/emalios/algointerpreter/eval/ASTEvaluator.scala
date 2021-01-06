@@ -1,9 +1,11 @@
 package fr.emalios.algointerpreter.eval
 
-import fr.emalios.algointerpreter.parser
+import fr.emalios.algointerpreter.lexer.{AlgoLexer, AlgoLexerError}
+import fr.emalios.algointerpreter.parser.TokensParser
 import fr.emalios.algointerpreter.parser.{Affectation, BinaryOperation, Block, BooleanLiteral, ExprInstr, Expression, FunctionCall, Identifier, Instruction, Literal, Number, StringLiteral, UnaryOperation}
 import fr.emalios.algointerpreter.token.{And, Equals, Greater, GreaterEqual, Lesser, LesserEqual, Minus, Mul, Not, Or, Plus}
 
+import java.util.Scanner
 import scala.collection.mutable
 
 class ASTEvaluator {
@@ -21,11 +23,6 @@ class ASTEvaluator {
   private def printDelimiter(length: Int): Unit = {
     for (_ <- 1 to length) print("-")
     println()
-  }
-
-  def init(): Unit = {
-    //val read = FunctionValue(List(("value", IntegerValue())), Block())
-    // if (this.varEnv.contains(functionName)) callFunction(functionName, args) else throw AlgoEvaluationError("Error: Function '" + functionName + "' do not exist.")
   }
 
   def addInstructionToEnv(instruction: Instruction): Unit = {
@@ -54,9 +51,14 @@ class ASTEvaluator {
   private def eval(expression: Expression): Value = {
     expression match {
       case FunctionCall(functionName, args) => functionName match {
-        case Identifier("lire") => {
-
-        }
+        case Identifier("lire") =>
+          val scanner: java.util.Scanner = new java.util.Scanner(System.in)
+          val input: String = scanner.nextLine()
+          val lexer:AlgoLexer = new AlgoLexer
+          val tokens = lexer.apply(input)
+          val parser = new TokensParser
+          val expression: Expression = parser.applyInput(tokens)
+          eval(expression)
       }
       case UnaryOperation(operator, right) => operator match {
         case Minus => IntegerValue(eval(right) match {
@@ -129,7 +131,7 @@ class ASTEvaluator {
       }
       case literal: Literal => literal match {
         case StringLiteral(value) => StringValue(value)
-        case parser.Number(value) => IntegerValue(value)
+        case Number(value) => IntegerValue(value)
         case BooleanLiteral(value) => BooleanValue(value)
       }
     }
