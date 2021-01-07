@@ -1,3 +1,10 @@
 Début
     x <- 1 < 2
 Fin
+
+fonction foo()
+Debut
+    x <- lire()
+    ecrire(x)
+    foo()
+Fin

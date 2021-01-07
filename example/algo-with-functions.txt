@@ -1,0 +1,10 @@
+Debut
+ ecrire("Veuillez entrer une valeur quelconque")
+ x <- lire()
+ ecrire(x)
+Fin
+
+fonction afficher(nombre: entier)
+Debut
+ ecrire(nombre)
+Fin

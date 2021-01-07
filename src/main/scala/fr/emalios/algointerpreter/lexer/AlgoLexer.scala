@@ -51,10 +51,10 @@ class AlgoLexer extends RegexParsers {
   val keywords: immutable.HashMap[String, Token] = immutable.HashMap(
     "," -> Comma,
     "Fin" -> End,
-    "entier" -> IntegerType,
-    "reel" -> RealType,
-    "chaine" -> StringType,
-    "char" -> CharType,
+    "entier" -> IntegerTypeToken,
+    "reel" -> RealTypeToken,
+    "chaine" -> StringTypeToken,
+    "char" -> CharTypeToken,
     "Debut" -> Start,
     "si" -> If,
     "fsi" -> EndIf,
@@ -109,6 +109,7 @@ class AlgoLexer extends RegexParsers {
     (
       "<-" ^^^ Affectation
       | "=" ^^^ Equals
+      | ":" ^^^ DoublePoints
       | "(" ^^^ LeftParen
       | ")" ^^^ RightParen
       | "+" ^^^ Plus

@@ -10,17 +10,17 @@ import scala.collection.mutable
 
 object Main extends AlgoLexer {
 
-  val debugMode = false
+  val debugMode = true
 
   def main(args: Array[String]): Unit = {
     val lexer:AlgoLexer = new AlgoLexer
-    val tokens = lexer.apply("Debut\n ecrire(\"Veuillez entrer une valeur quelconque\") \n x <- lire() \n ecrire(x) \n Fin")
-    if (debugMode) println(tokens)
+    val tokens = lexer.apply("Debut\n ecrire(\"Veuillez entrer une valeur quelconque\")\n x <- lire()\n ecrire(x)\nFin\n\nfonction afficher(nombre: entier)\nDebut\n ecrire(nombre)\nFin")
+    println(tokens)
     val parser: TokensParser = new TokensParser
     val ast = parser.apply(tokens)
     var i: Int = 1
     val evaluator = new ASTEvaluator
-    ast.block.instructions.foreach(instruction => {
+    ast.mainAlgo.block.instructions.foreach(instruction => {
       //println("Press enter to display actual environment " + "instruction (" + i + ")")
       i+=1
       //scanner.nextLine()

@@ -1,6 +1,7 @@
 package fr.emalios.algointerpreter.parser
 
 import fr.emalios.algointerpreter.Main.debugMode
+import fr.emalios.algointerpreter.eval.{CharType, IntegerType, RealType, StringType, Type}
 import fr.emalios.algointerpreter.{parser, token}
 import fr.emalios.algointerpreter.token._
 
@@ -31,6 +32,7 @@ class TokensParser extends Parsers {
   }
 
   private def parseIdentifier: Parser[parser.Identifier] = {
+    if(debugMode) println("try to parse identifier")
     accept("identifier", { case identifier @ token.Identifier(value) => parser.Identifier(value) })
   }
 
@@ -159,9 +161,47 @@ class TokensParser extends Parsers {
     /*parseIfThenInstruction() | parseIfThenElseInstruction() | parseForInstruction  | */ (parseAffectation | parseExprFunctionCall) <~ EndOfLine
   }
 
+  private def parseFunction: Parser[parser.Function] = {
+    if (debugMode) println("try to parse function")
+    parseFunctionDeclaration ~ parseEndOfLine ~ parseAlgo ^^ { case functionDeclaration ~ _ ~ algo => parser.Function(functionDeclaration, algo) }
+  }
+
+  private def parseFunctionDeclaration: Parser[FunctionDeclaration] = {
+    if (debugMode) println("try to parse function declaration")
+    Function ~> parseIdentifier ~ parseTypeParameters ~  opt(parseReturnType) ^^ { case identifier ~ typeParameters ~ returnType => FunctionDeclaration(identifier, typeParameters, returnType) }
+  }
+
+  private def parseReturnType: Parser[Type] = {
+    if (debugMode) println("try to parse return type")
+    DoublePoints ~> parseType
+  }
+
+  private def parseTypeParameters: Parser[List[TypeParameter]] = {
+    if (debugMode) println("try to parse list of type parameter")
+      LeftParen ~> repsep(parseTypeParameter, Comma) <~ RightParen
+  }
+
+  private def parseTypeParameter: Parser[TypeParameter] = {
+    if (debugMode) println("try to parse type parameter")
+    (parseIdentifier ~ DoublePoints ~ parseType) ^^ { case identifier ~ _ ~ paramType => TypeParameter(identifier, paramType) }
+  }
+
+  private def parseType: Parser[Type] = {
+    if (debugMode) println("try to parse type")
+      CharTypeToken ^^^ CharType |
+      IntegerTypeToken ^^^ IntegerType |
+        StringTypeToken ^^^ StringType |
+        RealTypeToken ^^^ RealType
+  }
+
   private def parseAlgo: Parser[Algo] = {
     if (debugMode) println("try to parse algo")
-    phrase(parseBlock(Start <~ parseEndOfLine, End)) ^^ Algo
+    parseBlock(Start <~ parseEndOfLine, End) <~ rep(parseEndOfLine) ^^ Algo
+  }
+
+  private def parseProgram: Parser[Program] = {
+    if(debugMode) println("try to parse program")
+    parseAlgo ~ repsep(parseFunction, rep1(parseEndOfLine)) ^^ { case mainAlgo ~ functions => Program(mainAlgo, functions) }
   }
 
   private def parseEndOfLine: Parser[Token] = {
@@ -169,9 +209,9 @@ class TokensParser extends Parsers {
     rep1(EndOfLine) ^^^ EndOfLine
   }
 
-  def apply(tokens: Seq[Token]): Algo = {
+  def apply(tokens: Seq[Token]): Program = {
     val reader = new TokenReader(tokens)
-    parseAlgo.apply(reader) match {
+    parseProgram.apply(reader) match {
       case NoSuccess(msg, _) => println(msg); null
       case Success(result, _) => result
     }

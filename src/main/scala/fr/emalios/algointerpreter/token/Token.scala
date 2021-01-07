@@ -7,10 +7,10 @@ package fr.emalios.algointerpreter.token
   case class Identifier(str: String) extends Token
 
   case class IntegerToken(number: Int) extends Literal
-  case object IntegerType extends Token
-  case object StringType extends Token
-  case object CharType extends Token
-  case object RealType extends Token
+  case object IntegerTypeToken extends Token
+  case object StringTypeToken extends Token
+  case object CharTypeToken extends Token
+  case object RealTypeToken extends Token
 
   case class StringToken(value: String) extends Literal
 
@@ -95,4 +95,5 @@ package fr.emalios.algointerpreter.token
 
   case object Mod extends Token
   case object Do extends Token
+case object DoublePoints extends Token
 
