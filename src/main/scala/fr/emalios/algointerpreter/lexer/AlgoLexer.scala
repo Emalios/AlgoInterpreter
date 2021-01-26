@@ -2,6 +2,7 @@ package fr.emalios.algointerpreter.lexer
 
 import fr.emalios.algointerpreter.parser.StringLiteral
 import fr.emalios.algointerpreter.token
+import fr.emalios.algointerpreter.token.EndOfLine
 import fr.emalios.algointerpreter.token._
 
 import scala.collection.immutable
@@ -21,7 +22,7 @@ class AlgoLexer extends RegexParsers {
    * Redefinition of the regex which matches the characters that we want to pass,
    * here we want to ignore all the whitespaces because in algo we don't care about whitespaces.
    */
-  override val whiteSpace: Regex = "[^\\S\r\n]".r
+  override val whiteSpace: Regex = "[^\\S\r\n]+".r
 
   /**
    * The value is matched here if it starts with a '"' and finish by '"'.
@@ -49,7 +50,6 @@ class AlgoLexer extends RegexParsers {
   }
 
   val keywords: immutable.HashMap[String, Token] = immutable.HashMap(
-    "," -> Comma,
     "Fin" -> End,
     "entier" -> IntegerTypeToken,
     "reel" -> RealTypeToken,
@@ -58,8 +58,6 @@ class AlgoLexer extends RegexParsers {
     "Debut" -> Start,
     "si" -> If,
     "fsi" -> EndIf,
-    "et" -> And,
-    "ou" -> Or,
     "Pour" -> For,
     "de" -> From,
     "a" -> To,
@@ -70,9 +68,7 @@ class AlgoLexer extends RegexParsers {
     "sinon" -> Else,
     "faire" -> Do,
     "fonction" -> Function,
-    "mod" -> Mod,
     "retourne" -> Return,
-    "non" -> Not,
     "vrai" -> BooleanToken(true),
     "faux" -> BooleanToken(false)
   )
@@ -87,31 +83,28 @@ class AlgoLexer extends RegexParsers {
   def identifierOrKeyword: Parser[Token] = {
     "[a-zA-Z_][a-zA-Z0-9_]*".r ^^ { str =>
       if (keywords.contains(str)) keywords(str) else Identifier(str)
-    } | "\r?\n".r ^^ { _ => EndOfLine }
-  }
-/*
-  private def functionCall: Parser[Token] = {
-    identifierOrKeyword ~ args
+    }
   }
 
-  private def args: Parser[Token] = {
-
+  /**
+   *
+   * @return parser which associates a end of line character matched by the regex with the EndOfLine token.
+   */
+  def parseEndOfLine: Parser[Token] = {
+    "\r?\n".r ^^^ EndOfLine
   }
-
- */
 
   /** TODO: rewrite
-   * As we have a finite list of tokens, we assign each token to its literal value
+   * As we have a finite list of tokens, we assign each token to its literal value.
    *
    * @return parser which associates a token with to its literal value.
    */
   def operator: Parser[Token] = {
     (
       "<-" ^^^ Affectation
-      | "=" ^^^ Equals
+        | "mod" ^^^ Mod
+        | "=" ^^^ Equals
       | ":" ^^^ DoublePoints
-      | "(" ^^^ LeftParen
-      | ")" ^^^ RightParen
       | "+" ^^^ Plus
       | "-" ^^^ Minus
       | "*" ^^^ Mul
@@ -122,6 +115,9 @@ class AlgoLexer extends RegexParsers {
       | ">=" ^^^ GreaterEqual
       | "et" ^^^ And
       | "ou" ^^^ Or
+      | "," ^^^ Comma
+      | "(" ^^^ LeftParen
+      | ")" ^^^ RightParen
       )
   }
 
@@ -130,7 +126,7 @@ class AlgoLexer extends RegexParsers {
    * @return a set of tokens
    */
   def tokens: Parser[List[Token]] = {
-    phrase(rep1(operator | identifierOrKeyword | literal | number))
+    phrase(rep1(operator | identifierOrKeyword | parseEndOfLine | literal | number))
   }
 
   def apply(code: String): List[Token] = {

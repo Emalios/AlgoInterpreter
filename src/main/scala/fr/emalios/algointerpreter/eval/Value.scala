@@ -1,6 +1,6 @@
 package fr.emalios.algointerpreter.eval
 
-import fr.emalios.algointerpreter.parser.Block
+import fr.emalios.algointerpreter.parser.{Block, Expression, FunctionDeclaration, ReturnType}
 
 class Value
 
@@ -14,5 +14,6 @@ class Value
     override def toString: String = this.value.toString
   }
 
-case class FunctionValue(args: List[(String, Value)], body: Block) extends Value
+case class PrimFunction(fun: Seq[Value] => Value) extends Value
 
+case class FunctionApplication(declaration: FunctionDeclaration, block: Block) extends Value

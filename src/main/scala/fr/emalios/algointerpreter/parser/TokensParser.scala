@@ -188,20 +188,20 @@ class TokensParser extends Parsers {
 
   private def parseType: Parser[Type] = {
     if (debugMode) println("try to parse type")
-      CharTypeToken ^^^ CharType |
-      IntegerTypeToken ^^^ IntegerType |
+        CharTypeToken ^^^ CharType |
+        IntegerTypeToken ^^^ IntegerType |
         StringTypeToken ^^^ StringType |
         RealTypeToken ^^^ RealType
   }
 
   private def parseAlgo: Parser[Algo] = {
     if (debugMode) println("try to parse algo")
-    parseBlock(Start <~ parseEndOfLine, End) <~ rep(parseEndOfLine) ^^ Algo
+    parseBlock(Start <~ parseEndOfLine, End) ^^ Algo
   }
 
   private def parseProgram: Parser[Program] = {
     if(debugMode) println("try to parse program")
-    parseAlgo ~ repsep(parseFunction, rep1(parseEndOfLine)) ^^ { case mainAlgo ~ functions => Program(mainAlgo, functions) }
+    parseAlgo ~ parseEndOfLine ~ repsep(parseFunction, rep1(parseEndOfLine)) ^^ { case mainAlgo ~ _ ~ functions => Program(mainAlgo, functions) }
   }
 
   private def parseEndOfLine: Parser[Token] = {
