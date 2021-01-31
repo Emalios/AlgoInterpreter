@@ -14,7 +14,7 @@ object Main extends AlgoLexer {
 
   def main(args: Array[String]): Unit = {
     val lexer:AlgoLexer = new AlgoLexer
-    val tokens = lexer.apply("Debut\n    i <- 1\n    tantque i != 10 faire\n        ecrire(i)\n        i <- i + 1\n    ftant\n    ecrire(i)\nFin")
+    val tokens = lexer.apply("Debut\n    ecrire(factorielle(5))\nFin\n\nfonction factorielle(x: entier): entier\nDebut\n    si x = 1 alors\n        retourne 1\n    sinon\n        retourne x * factorielle(x-1)\n    fsi\nFin")
     if (debugMode) println(tokens)
     val parser: TokensParser = new TokensParser
     val ast = parser.apply(tokens)

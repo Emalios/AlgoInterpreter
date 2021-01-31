@@ -28,7 +28,7 @@ class ASTEvaluator() {
     val scanner = new java.util.Scanner(System.in)
     val tokens = new AlgoLexer().apply(scanner.nextLine())
     val expression = new TokensParser().applyInput(tokens)
-    evalExpression(expression)
+    evalExpression(expression).get
   }
 
   //builtin function for `ecrire(Valeur...)`
@@ -84,14 +84,10 @@ class ASTEvaluator() {
               }
             }
         } else {
-          this.getCurrentFrame.addOne(identifier, (this.evalExpression(expression), InOut))
+          this.getCurrentFrame.addOne(identifier, (this.evalExpression(expression).get, InOut))
           Option.empty
         }
-      case exprInstr: ExprInstr => exprInstr.e match {
-        case FunctionCall(functionName, args) => functionName match {
-          case _ => callFunction(functionName, args); Option.empty
-        }
-      }
+      case exprInstr: ExprInstr => this.evalExpression(exprInstr.e)
       case ForInstruction(identifier, expressionFrom, expressionTo, block) =>
         //typecheck expressionFrom and expressionTo, must be integers
         val evaluatedExpressionFrom = this.evalExpression(expressionFrom)
@@ -131,7 +127,7 @@ class ASTEvaluator() {
         //eval while instruction
         while (evaluatedCondition match {
           //typecheck, condition must be a boolean
-          case value: BooleanValue => value.value.get()
+          case value: Option[BooleanValue] => value.get.value.get()
           case _ => throw AlgoTypeCheckingError("Erreur: booléen attendu pour '" + evaluatedCondition)
         }) {
           this.evalBlock(block)
@@ -141,7 +137,7 @@ class ASTEvaluator() {
         Option.empty
       case IfThenElseInstruction(condition, thenBlock, elseBlock) => this.evalExpression(condition) match {
         //TODO: refactor type checker to remove redudant code.
-        case BooleanValue(value) =>
+        case Some(BooleanValue(value)) =>
           val frame: Frame = this.getCurrentFrame.clone()
           var blockValue: Option[Value] = null
           this.callStack.addOne(frame)
@@ -157,14 +153,13 @@ class ASTEvaluator() {
             Option.empty
         case _ => /* error */ throw AlgoTypeCheckingError("Erreur: booléen attendu pour une condition '" + condition + "'.")
       }
-        //TODO: remove declared variables from if then else block.
-      case Return(expression) => Option(this.evalExpression(expression))
+      case Return(expression) => this.evalExpression(expression)
     }
 
   private def callFunction(functionName: Identifier, values: List[Expression]): Option[Value] = {
     if (this.getCurrentFrame.contains(functionName)) {
       this.getCurrentFrame(functionName) match {
-        case (PrimFunction(function), _) => Option(function.apply(values.map(evalExpression)))
+        case (PrimFunction(function), _) => Option(function.apply(values.map(evalExpression).map(optionalValue => optionalValue.get)))
         case (FunctionApplication(declaration, block), _) =>
           //if number of elements in values mismatch with the number of elements in function declaration, error
           if(values.length != declaration.typeParameters.length) throw AlgoEvaluationError("Erreur: La fonction '" + functionName + "' prend " + declaration.typeParameters.length + " paramètre(s), ici, " + values.length + " argument(s) lui sont fournis.")
@@ -174,23 +169,23 @@ class ASTEvaluator() {
             val expressionValue = evalExpression(value)
             typeParameter.paramType match {
               case BooleanType => expressionValue match {
-                case value: BooleanValue => frame.addOne(typeParameter.name, (value, typeParameter.quantifier))
+                case value: Option[BooleanValue] => frame.addOne(typeParameter.name, (value.get, typeParameter.quantifier))
                 case _ => this.typeCheckError("booléen", typeParameter, value)
               }
               case RealType => expressionValue match {
-                case value: RealValue => frame.addOne(typeParameter.name, (value, typeParameter.quantifier))
+                case value: Option[RealValue] => frame.addOne(typeParameter.name, (value.get, typeParameter.quantifier))
                 case _ => this.typeCheckError("réel", typeParameter, value)
               }
               case StringType => expressionValue match {
-                case value: StringValue => frame.addOne(typeParameter.name, (value, typeParameter.quantifier))
+                case value: Option[StringValue] => frame.addOne(typeParameter.name, (value.get, typeParameter.quantifier))
                 case _ => this.typeCheckError("chaine", typeParameter, value)
               }
               case CharType => expressionValue match {
-                case value: CharValue => frame.addOne(typeParameter.name, (value, typeParameter.quantifier))
+                case value: Option[CharValue] => frame.addOne(typeParameter.name, (value.get, typeParameter.quantifier))
                 case _ => this.typeCheckError("charactere", typeParameter, value)
               }
               case IntegerType => expressionValue match {
-                case value: IntegerValue => frame.addOne(typeParameter.name, (value, typeParameter.quantifier))
+                case value: Option[IntegerValue] => frame.addOne(typeParameter.name, (value.get, typeParameter.quantifier))
                 case _ => this.typeCheckError("entier", typeParameter, value)
               }
             }
@@ -220,71 +215,72 @@ class ASTEvaluator() {
     if(returnDetected) this.evalInstruction(block.instructions(i)) else Option.empty
   }
 
-  private def evalExpression(expression: Expression): Value = {
+  private def evalExpression(expression: Expression): Option[Value] = {
     expression match {
-      case FunctionCall(functionName, args) => /* todo, check if value is preset */ this.callFunction(functionName, args).get
+      case FunctionCall(functionName, args) => this.callFunction(functionName, args)
       case UnaryOperation(operator, right) => operator match {
-        case Minus => IntegerValue(evalExpression(right) match {
-          case IntegerValue(value) => new AtomicInteger(-value.get())
-        })
-        case Not => BooleanValue(evalExpression(right) match {
-            case BooleanValue(value) => value
-        })
+        case Minus => Option(IntegerValue(evalExpression(right) match {
+          case Some(IntegerValue(value)) => new AtomicInteger(-value.get())
+        }))
+        case Not => Option(BooleanValue(evalExpression(right) match {
+            case Some(BooleanValue(value)) => value
+        }))
       }
       case BinaryOperation(left, operator, right) => operator match {
         case Plus => evalExpression(left) match {
-          case left: IntegerValue => evalExpression(right) match {
-            case right: IntegerValue => IntegerValue(new AtomicInteger(left.value.get() + right.value.get()))
+          case left: Option[IntegerValue] => evalExpression(right) match {
+            case right: Option[IntegerValue] => Option(IntegerValue(new AtomicInteger(left.get.value.get() + right.get.value.get())))
           }
         }
         case Minus => evalExpression(left) match {
-          case left: IntegerValue => evalExpression(right) match {
-            case right: IntegerValue => IntegerValue(new AtomicInteger(left.value.get() - right.value.get()))
+          case left: Option[IntegerValue] => evalExpression(right) match {
+            case right: Option[IntegerValue] => Option(IntegerValue(new AtomicInteger(left.get.value.get() - right.get.value.get())))
           }
         }
-        case Mul => evalExpression(left) match {
-          case left: IntegerValue => evalExpression(right) match {
-            case right: IntegerValue => IntegerValue(new AtomicInteger(left.value.get() * right.value.get()))
+        case Mul => this.evalExpression(left) match {
+          case left: Option[IntegerValue] => this.evalExpression(right) match {
+            case right: Option[IntegerValue] =>
+              Option(IntegerValue(new AtomicInteger(left.get.value.get() * right.get.value.get())))
           }
         }
         case Lesser => evalExpression(left) match {
-          case left: IntegerValue => evalExpression(right) match {
-            case right: IntegerValue => BooleanValue(new AtomicBoolean(left.value.get() < right.value.get()))
+          case left: Option[IntegerValue] => evalExpression(right) match {
+            case right: Option[IntegerValue] => Option(BooleanValue(new AtomicBoolean(left.get.value.get() < right.get.value.get())))
           }
         }
         case LesserEqual => evalExpression(left) match {
-          case left: IntegerValue => evalExpression(right) match {
-            case right: IntegerValue => BooleanValue(new AtomicBoolean(left.value.get() <= right.value.get()))
+          case left: Option[IntegerValue] => evalExpression(right) match {
+            case right: Option[IntegerValue] => Option(BooleanValue(new AtomicBoolean(left.get.value.get() <= right.get.value.get())))
           }
         }
         case Greater => evalExpression(left) match {
-          case left: IntegerValue => evalExpression(right) match {
-            case right: IntegerValue => BooleanValue(new AtomicBoolean(left.value.get() > right.value.get()))
+          case left: Option[IntegerValue] => evalExpression(right) match {
+            case right: Option[IntegerValue] => Option(BooleanValue(new AtomicBoolean(left.get.value.get() > right.get.value.get())))
           }
         }
         case GreaterEqual => evalExpression(left) match {
-          case left: IntegerValue => evalExpression(right) match {
-            case right: IntegerValue => BooleanValue(new AtomicBoolean(left.value.get() >= right.value.get()))
+          case left: Option[IntegerValue] => evalExpression(right) match {
+            case right: Option[IntegerValue] => Option(BooleanValue(new AtomicBoolean(left.get.value.get() >= right.get.value.get())))
           }
         }
         case Equals => evalExpression(left) match {
-          case left: IntegerValue => evalExpression(right) match {
-            case right: IntegerValue => BooleanValue(new AtomicBoolean(left.value.get() == right.value.get()))
+          case left: Option[IntegerValue] => evalExpression(right) match {
+            case right: Option[IntegerValue] => Option(BooleanValue(new AtomicBoolean(left.get.value.get() == right.get.value.get())))
           }
         }
         case NotEquals => evalExpression(left) match {
-          case left: IntegerValue => evalExpression(right) match {
-            case right: IntegerValue => BooleanValue(new AtomicBoolean(left.value.get() != right.value.get()))
+          case left: Option[IntegerValue] => evalExpression(right) match {
+            case right: Option[IntegerValue] => Option(BooleanValue(new AtomicBoolean(left.get.value.get() != right.get.value.get())))
           }
         }
         case And => evalExpression(left) match {
-          case left: BooleanValue => evalExpression(right) match {
-            case right: BooleanValue => BooleanValue(new AtomicBoolean(left.value.get() && right.value.get()))
+          case left: Option[BooleanValue] => evalExpression(right) match {
+            case right: Option[BooleanValue] => Option(BooleanValue(new AtomicBoolean(left.get.value.get() && right.get.value.get())))
           }
         }
         case Or => evalExpression(left) match {
-          case left: BooleanValue => evalExpression(right) match {
-            case right: BooleanValue => BooleanValue(new AtomicBoolean(left.value.get() || right.value.get()))
+          case left: Option[BooleanValue] => evalExpression(right) match {
+            case right: Option[BooleanValue] => Option(BooleanValue(new AtomicBoolean(left.get.value.get() || right.get.value.get())))
           }
         }
       }
@@ -292,18 +288,18 @@ class ASTEvaluator() {
         if (this.getCurrentFrame.contains(identifier)) this.getCurrentFrame(identifier)._2 match {
           case Out => throw AlgoEvaluationError("Erreur: Vous ne pouvez pas lire cette variable : '" + identifier.value + "'")
           case _ => this.getCurrentFrame(identifier)._1 match {
-            case value: IntegerValue => value
-            case value: RealValue => value
-            case value: BooleanValue => value
-            case value: StringValue => value
-            case value: CharValue => value
+            case value: IntegerValue => Option(value)
+            case value: RealValue => Option(value)
+            case value: BooleanValue => Option(value)
+            case value: StringValue => Option(value)
+            case value: CharValue => Option(value)
           }
         }
         else throw AlgoEvaluationError("Erreur: L'identifieur: '" + identifier.value + "' n'existe pas dans la portée actuelle.")
       case literal: Literal => literal match {
-        case StringLiteral(value) => StringValue(value)
-        case Number(value) => IntegerValue(new AtomicInteger(value))
-        case BooleanLiteral(value) => BooleanValue(new AtomicBoolean(value))
+        case StringLiteral(value) => Option(StringValue(value))
+        case Number(value) => Option(IntegerValue(new AtomicInteger(value)))
+        case BooleanLiteral(value) => Option(BooleanValue(new AtomicBoolean(value)))
       }
     }
   }

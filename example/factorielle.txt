@@ -1,0 +1,12 @@
+Debut
+    ecrire(factorielle(5))
+Fin
+
+fonction factorielle(x: entier): entier
+Debut
+    si x = 1 alors
+        retourne 1
+    sinon
+        retourne x * factorielle(x-1)
+    fsi
+Fin
