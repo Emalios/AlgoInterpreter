@@ -15,10 +15,11 @@ package fr.emalios.algointerpreter.token
   case class StringToken(value: String) extends Literal
 
   case class BooleanToken(value: Boolean) extends Literal
-
+  case object InOut extends Token
   case object Start extends Token
   case object End extends Token
-
+  case object In extends Token
+case object Out extends Token
   case object If extends Token
 
   case object EndIf extends Token

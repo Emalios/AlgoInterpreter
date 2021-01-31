@@ -1,16 +1,67 @@
 Debut
  ecrire("Veuillez entrer une valeur quelconque")
  x <- lire()
- afficher(x)
-Fin
-
-fonction afficher(nombre: entier)
-Debut
- ecrire(nombre)
+ puissance2(x)
 Fin
 
 fonction puissance2(nombre: entier)
 Debut
     x <- nombre * nombre
+    ecrire(x)
+Fin
+
+/* ---------------------------------------------- */
+
+Debut
+ ecrire("Veuillez entrer une valeur quelconque")
+ x <- lire()
+ ecrire(puissance2(x))
+Fin
+
+fonction puissance2(nombre: entier): entier
+Debut
+    x <- nombre * nombre
     retourne x
+Fin
+
+/* -------------- Unknow identifier ------------- */
+
+Debut
+ ecrire("Veuillez entrer une valeur quelconque")
+ x <- lire()
+ ecrire(puissance2(x))
+Fin
+
+fonction puissance2(nombre: entier): entier
+Debut
+    x <- y * x
+    retourne x
+Fin
+
+/* -------------- InOut version ------------- */
+
+Debut
+ ecrire("Veuillez entrer une valeur quelconque")
+ x <- lire()
+ ecrire(puissance2(x))
+Fin
+
+fonction puissance2(nombre InOut : entier): entier
+Debut
+    nombre <- nombre * nombre
+    retourne nombre
+Fin
+
+/* -------------- Modify gived parameter ------------- */
+
+Debut
+ ecrire("Veuillez entrer une valeur quelconque")
+ x <- lire()
+ ecrire(puissance2(x))
+Fin
+
+fonction puissance2(nombre: entier): entier
+Debut
+    nombre <- nombre * nombre
+    retourne nombre
 Fin

@@ -1,0 +1,13 @@
+Debut
+    pour i de 1 a 10 faire
+        ecrire(i)
+    fpour
+Fin
+
+Debut
+    i <- 999
+    pour i de 1 a 10 faire
+        ecrire(i)
+    fpour
+    ecrire(i)
+Fin

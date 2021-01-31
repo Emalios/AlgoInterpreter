@@ -1,0 +1,38 @@
+Debut
+ ecrire("Veuillez entrer une valeur supérieur à 10")
+ x <- lire()
+ si x > 10 alors
+    ecrire("ok")
+ fsi
+Fin
+
+Debut
+ ecrire("Veuillez entrer une valeur supérieur à 10")
+ x <- lire()
+ si x > 10 alors
+    ecrire("ok")
+ sinon
+    ecrire("pas ok")
+ fsi
+Fin
+
+Debut
+ ecrire("Veuillez entrer une valeur supérieur à 10")
+ x <- lire()
+ si x > 10 alors
+    ecrire("ok")
+ sinon si x > 7 alors
+    ecrire("pas ok")
+    fsi
+ fsi
+Fin
+
+Debut
+ x <- 15
+ si x > 10 alors
+    ecrire(x)
+    x <- 5
+    ecrire(x)
+ fsi
+ ecrire(x)
+Fin

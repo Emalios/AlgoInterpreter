@@ -1,0 +1,10 @@
+Debut
+    x <- 1
+    test(1)
+Fin
+
+fonction test(x: entier): entier
+Debut
+    ecrire(x)
+    test(x+1)
+Fin

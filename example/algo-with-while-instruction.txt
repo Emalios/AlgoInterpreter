@@ -1,0 +1,8 @@
+Debut
+    i <- 1
+    tantque i != 10 faire
+        ecrire(i)
+        i <- i + 1
+    ftant
+    ecrire(i)
+Fin
