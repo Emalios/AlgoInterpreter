@@ -51,6 +51,7 @@ class AlgoLexer extends RegexParsers {
 
   val keywords: immutable.HashMap[String, Token] = immutable.HashMap(
     "entier" -> IntegerTypeToken,
+    "booleen" -> BooleanTypeToken,
     "reel" -> RealTypeToken,
     "chaine" -> StringTypeToken,
     "char" -> CharTypeToken,
@@ -107,21 +108,23 @@ class AlgoLexer extends RegexParsers {
       "<-" ^^^ Affectation
         | "mod" ^^^ Mod
         | "=" ^^^ Equals
+        | "%" ^^^ Percent
       | ":" ^^^ DoublePoints
       | "+" ^^^ Plus
       | "-" ^^^ Minus
       | "*" ^^^ Mul
       | "/" ^^^ Slash
+        | "<=" ^^^ LesserEqual
+        | ">=" ^^^ GreaterEqual
       | "<" ^^^ Lesser
       | ">" ^^^ Greater
-      | "<=" ^^^ LesserEqual
-      | ">=" ^^^ GreaterEqual
       | "et" ^^^ And
       | "ou" ^^^ Or
       | "," ^^^ Comma
       | "(" ^^^ LeftParen
       | ")" ^^^ RightParen
       | "!=" ^^^ NotEquals
+        | "!" ^^^ Not
       )
   }
 

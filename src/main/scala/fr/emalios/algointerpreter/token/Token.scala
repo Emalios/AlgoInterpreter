@@ -9,6 +9,7 @@ package fr.emalios.algointerpreter.token
   case class IntegerToken(number: Int) extends Literal
   case object IntegerTypeToken extends Token
   case object StringTypeToken extends Token
+  case object BooleanTypeToken extends Token
   case object CharTypeToken extends Token
   case object RealTypeToken extends Token
 
@@ -66,7 +67,7 @@ case object Out extends Token
 
   case object Slash extends Token
 
-  case object PERCENT extends Token
+  case object Percent extends Token
 
   case object Mul extends Token
 

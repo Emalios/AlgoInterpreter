@@ -1,9 +1,10 @@
 package fr.emalios.algointerpreter.parser
 
 import fr.emalios.algointerpreter.Main.devDebugMode
-import fr.emalios.algointerpreter.eval.{CharType, IntegerType, Quantifier, RealType, StringType, Type}
+import fr.emalios.algointerpreter.eval.Quantifier
 import fr.emalios.algointerpreter.{parser, token}
 import fr.emalios.algointerpreter.token._
+import fr.emalios.algointerpreter.typecheck.{BooleanType, CharType, FunctionType, IntegerType, RealType, StringType, Type}
 
 import scala.util.parsing.combinator.Parsers
 
@@ -43,11 +44,23 @@ class TokensParser extends Parsers {
 
   private def parseBinary: Parser[Expression] = {
     if (devDebugMode) println("try to parse binary")
-    chainl1(chainl1(chainl1(parseGrouping | parseUnary | parseLiteral | parseFunctionCall | parseIdentifier, parseMultiplication | parseBooleanExpr), parseAddition | parseSubtraction), parseInequality | parseEquality)
+    chainl1(chainl1(chainl1(parseGrouping | parseUnary | parseLiteral | parseFunctionCall | parseIdentifier, parseMultiplication | parseDivision | parseMod | parseEuclideanDivision | parseBooleanExpr), parseAddition | parseSubtraction), parseInequality | parseEquality)
   }
 
   private def parseBooleanExpr: Parser[(Expression, Expression) => BinaryOperation] = {
-    parseAnd | parseOr | parseLesser | parseLesserEquals | parseGreater | parseGreaterEquals
+    parseAnd | parseOr | parseLesserEquals | parseLesser | parseGreaterEquals | parseGreater
+  }
+
+  private def parseMod: Parser[(Expression, Expression) => BinaryOperation] = {
+    Mod ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Mod, right) } }
+  }
+
+  private def parseDivision: Parser[(Expression, Expression) => BinaryOperation] = {
+    Slash ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Slash, right) } }
+  }
+
+  private def parseEuclideanDivision: Parser[(Expression, Expression) => BinaryOperation] = {
+    Percent ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Percent, right) } }
   }
 
   private def parseAddition: Parser[(Expression, Expression) => BinaryOperation] = {
@@ -135,26 +148,14 @@ class TokensParser extends Parsers {
     LeftParen ~> repsep(parseExpression, Comma) <~ RightParen
   }
 
-  /*
-  private def parseForInstruction: Parser[Instruction] = {
-    ( For ~ parseIdentifier ~ From ~ parseExpression ~ To ~ parseExpression ~ parseBlock(Do, EndFor) ) ^^ { case _ ~ identifier ~ _ ~ expressionFrom ~ _ ~ expressionTo ~ block => ForInstruction(identifier, expressionFrom, expressionTo, block)}
-  }
-
-   */
-
   private def parseBlock(startDelimiter: Parser[Token], endDelimiter: Parser[Token]): Parser[Block] = {
     if (devDebugMode) println("try to parse block")
     startDelimiter ~> rep1(parseInstruction) <~ endDelimiter ^^ Block
   }
 
-  private def parseBlockWithEnd(startDelimiter: Parser[Token], endDelimiter: Parser[Token]): Parser[Block] = {
-    if (devDebugMode) println("try to parse block")
-    startDelimiter ~> rep1(parseInstruction) ~ endDelimiter ^^ { case block ~ _ => Block(block)}
-  }
-
-  private def parseAffectation: Parser[parser.Affectation] = {
+  private def parseAffectation: Parser[parser.Assignment] = {
     if (devDebugMode) println("try to parse affectation")
-    ( parseIdentifier ~ Affectation ~ parseExpression ) ^^ { case identifier ~ _ ~ expression => parser.Affectation(identifier, expression)}
+    ( parseIdentifier ~ Affectation ~ parseExpression ) ^^ { case identifier ~ _ ~ expression => parser.Assignment(identifier, expression)}
   }
 
   private def parseReturn: Parser[parser.Return] = {
@@ -164,7 +165,7 @@ class TokensParser extends Parsers {
 
   private def parseInstruction: Parser[Instruction] = {
     if (devDebugMode) println("try to parse instruction")
-    (parseIfThenElseInstruction | parseForInstruction | parseWhileInstruction | parseReturn | parseAffectation | parseExprFunctionCall) <~ parseEndOfLine
+    (parseIfThenElseInstruction | parseForInstruction | parseWhileInstruction | parseReturn | parseExprFunctionCall | parseAffectation) <~ parseEndOfLine
   }
 
   private def parseForInstruction: Parser[ForInstruction] = {
@@ -186,7 +187,7 @@ class TokensParser extends Parsers {
 
   private def parseFunctionDeclaration: Parser[FunctionDeclaration] = {
     if (devDebugMode) println("try to parse function declaration")
-    Function ~> parseIdentifier ~ parseTypeParameters ~  opt(parseReturnType) ^^ { case identifier ~ typeParameters ~ returnType => FunctionDeclaration(identifier, typeParameters, returnType) }
+    (Function ~> parseIdentifier <~ LeftParen) ~ opt(parseTypeParameters) ~ (RightParen ~> opt(parseReturnType)) ^^ { case identifier ~ typeParameters ~ returnType => FunctionDeclaration(identifier, FunctionType(typeParameters, returnType)) }
   }
 
   private def parseReturnType: Parser[Type] = {
@@ -196,13 +197,13 @@ class TokensParser extends Parsers {
 
   private def parseTypeParameters: Parser[List[TypeParameter]] = {
     if (devDebugMode) println("try to parse list of type parameter")
-      LeftParen ~> repsep(parseTypeParameter, Comma) <~ RightParen
+      repsep(parseTypeParameter, Comma)
   }
 
   private def parseTypeParameter: Parser[TypeParameter] = {
     if (devDebugMode) println("try to parse type parameter")
-    (parseIdentifier ~ opt(parseQuantifier) ~ DoublePoints ~ parseType) ^^ { case identifier ~ modifiable ~ _ ~ paramType => modifiable match {
-      case Some(_) => TypeParameter(identifier, paramType, modifiable.get)
+    (parseIdentifier ~ opt(parseQuantifier) ~ DoublePoints ~ parseType) ^^ { case identifier ~ quantifier ~ _ ~ paramType => quantifier match {
+      case Some(_) => TypeParameter(identifier, paramType, quantifier.get)
       case None =>TypeParameter(identifier, paramType, fr.emalios.algointerpreter.eval.In)
     } }
   }
@@ -216,6 +217,7 @@ class TokensParser extends Parsers {
   private def parseType: Parser[Type] = {
     if (devDebugMode) println("try to parse type")
         CharTypeToken ^^^ CharType       |
+        BooleanTypeToken ^^^ BooleanType |
         IntegerTypeToken ^^^ IntegerType |
         StringTypeToken ^^^ StringType   |
         RealTypeToken ^^^ RealType

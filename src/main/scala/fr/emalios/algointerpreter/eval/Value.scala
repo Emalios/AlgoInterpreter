@@ -32,120 +32,137 @@ abstract class Value {
 
   def ==(that: Value): Value = ???
 
+  def showType(): String
+
 }
 
 case class IntegerValue(value: AtomicInteger) extends Value {
   override def toString: String = this.value.toString
-
-  override def +(that: Value): IntegerValue = {
+  def this(value: Int) = {
+    this(new AtomicInteger(value))
+  }
+  override def +(that: Value): Value = {
     that match {
-      case IntegerValue(value) => IntegerValue(new AtomicInteger(this.value.get() + value.get()))
+      case IntegerValue(value) => new IntegerValue(this.value.get() + value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
 
-  override def unary_-(): IntegerValue = IntegerValue(new AtomicInteger(-this.value.get()))
+  override def unary_-(): Value = new IntegerValue(-this.value.get())
 
-  override def -(that: Value): IntegerValue = {
+  override def -(that: Value): Value = {
     that match {
-      case IntegerValue(value) => IntegerValue(new AtomicInteger(this.value.get() - value.get()))
+      case IntegerValue(value) => new IntegerValue(this.value.get() - value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
 
-  override def <(that: Value): BooleanValue = {
+  override def <(that: Value): Value = {
     that match {
-      case IntegerValue(value) => BooleanValue(new AtomicBoolean(this.value.get() < value.get()))
+      case IntegerValue(value) => new BooleanValue(this.value.get() < value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
 
-  override def >(that: Value): BooleanValue = {
+  override def >(that: Value): Value = {
     that match {
-      case IntegerValue(value) => BooleanValue(new AtomicBoolean(this.value.get() > value.get()))
+      case IntegerValue(value) => new BooleanValue(this.value.get() > value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
 
-  override def >=(that: Value): BooleanValue = {
+  override def >=(that: Value): Value = {
     that match {
-      case IntegerValue(value) => BooleanValue(new AtomicBoolean(this.value.get() >= value.get()))
+      case IntegerValue(value) => new BooleanValue(this.value.get() >= value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
 
-  override def <=(that: Value): BooleanValue = {
+  override def <=(that: Value): Value = {
     that match {
-      case IntegerValue(value) => BooleanValue(new AtomicBoolean(this.value.get() <= value.get()))
+      case IntegerValue(value) => new BooleanValue(this.value.get() <= value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
 
-  override def ==(that: Value): BooleanValue = {
+  override def ==(that: Value): Value = {
     that match {
-      case IntegerValue(value) => BooleanValue(new AtomicBoolean(this.value.get() == value.get()))
+      case IntegerValue(value) => new BooleanValue(this.value.get() == value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
 
-  override def !=(that: Value): BooleanValue = {
+  override def !=(that: Value): Value = {
     that match {
-      case IntegerValue(value) => BooleanValue(new AtomicBoolean(this.value.get() != value.get()))
+      case IntegerValue(value) => new BooleanValue(this.value.get() != value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
 
-  override def *(that: Value): IntegerValue = {
+  override def *(that: Value): Value = {
     that match {
-      case IntegerValue(value) => IntegerValue(new AtomicInteger(this.value.get() * value.get()))
+      case IntegerValue(value) => new IntegerValue(this.value.get() * value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
+
+  override def showType(): String = "entier"
 }
 
 case class StringValue(value: String) extends Value {
   override def toString: String = this.value
 
+  override def showType(): String = "chaîne"
 }
 
 case class BooleanValue(value: AtomicBoolean) extends Value {
   override def toString: String = this.value.toString
-
-  override def &&(that: Value): BooleanValue = {
+  def this(value: Boolean) = {
+    this(new AtomicBoolean(value))
+  }
+  override def &&(that: Value): Value = {
     that match {
-      case BooleanValue(value) => BooleanValue(new AtomicBoolean(this.value.get() && value.get()))
+      case BooleanValue(value) => new BooleanValue(this.value.get() && value.get())
     }
   }
 
-  override def unary_!(): BooleanValue = {
-    BooleanValue(new AtomicBoolean(!this.value.get()))
+  override def unary_!(): Value = {
+    new BooleanValue(!this.value.get())
   }
 
-  override def ||(that: Value): BooleanValue = {
+  override def ||(that: Value): Value = {
     that match {
-      case BooleanValue(value) => BooleanValue(new AtomicBoolean(this.value.get() || value.get()))
+      case BooleanValue(value) => new BooleanValue(this.value.get() || value.get())
     }
   }
 
-  override def !=(that: Value): BooleanValue = {
+  override def !=(that: Value): Value = {
     that match {
-      case IntegerValue(value) => BooleanValue(new AtomicBoolean(this.value.get() != value.get()))
+      case BooleanValue(value) => new BooleanValue(this.value.get() != value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
+
+  override def showType(): String = "booléen"
 }
 
 case class RealValue(value: Double) extends Value {
   override def toString: String = this.value.toString
+
+  override def showType(): String = "réel"
 }
 
 case class CharValue(value: Char) extends Value {
   override def toString: String = this.value.toString
+
+  override def showType(): String = "charactère"
 }
 
 //TODO: replace by Option[Value] to avoid null return
 case class PrimFunction(fun: Seq[Value] => Value) extends Value {
+  override def showType(): String = "prim function"
 }
 
 case class FunctionApplication(declaration: FunctionDeclaration, block: Block) extends Value {
+  override def showType(): String = "function"
 }
