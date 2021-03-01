@@ -8,23 +8,23 @@ import fr.emalios.algointerpreter.typecheck.{BooleanType, CharType, FunctionType
 
 import scala.util.parsing.combinator.Parsers
 
-class TokensParser extends Parsers {
+class AlgoParser extends Parsers {
 
   override type Elem = Token
 
   private def parseString: Parser[parser.Literal] = {
     if(devDebugMode) println("try to parse string")
-    accept("string literal", { case string @ token.StringToken(value) => parser.StringLiteral(value) })
+    accept("string literal", { case StringToken(value) => StringLiteral(value) })
   }
 
   private def parseInteger: Parser[parser.Literal] = {
     if (devDebugMode) println("try to parse integer")
-    accept("integer literal", { case integer @ token.IntegerToken(value) => parser.Number(value) })
+    accept("integer literal", { case IntegerToken(value) => Number(value) })
   }
 
   private def parseBoolean: Parser[parser.Literal] = {
     if(devDebugMode) println("try to parse boolean")
-    accept("boolean literal", { case boolean @ token.BooleanToken(value) => parser.BooleanLiteral(value)})
+    accept("boolean literal", { case BooleanToken(value) => BooleanLiteral(value)})
   }
 
   private def parseLiteral: Parser[Expression] = {
@@ -34,12 +34,16 @@ class TokensParser extends Parsers {
 
   private def parseIdentifier: Parser[parser.Identifier] = {
     if(devDebugMode) println("try to parse identifier")
-    accept("identifier", { case identifier @ token.Identifier(value) => parser.Identifier(value) })
+    accept("identifier", { case token.Identifier(value) => parser.Identifier(value) })
   }
 
   private def parseUnary: Parser[Expression] = {
     if (devDebugMode) println("try to parse unary")
-    ( (Not | Minus ) ~ parseExpression) ^^ { case operator ~ expression => UnaryOperation(operator, expression) }
+    ( (Not | Minus) ~ parseExpression) ^^ { case operator ~ expression => operator match {
+      case operator: Operator => operator match {
+        case operator: UnaryOperator => UnaryOperation(operator, expression)
+      }
+    } }
   }
 
   private def parseBinary: Parser[Expression] = {
@@ -47,85 +51,53 @@ class TokensParser extends Parsers {
     chainl1(chainl1(chainl1(parseGrouping | parseUnary | parseLiteral | parseFunctionCall | parseIdentifier, parseMultiplication | parseDivision | parseMod | parseEuclideanDivision | parseBooleanExpr), parseAddition | parseSubtraction), parseInequality | parseEquality)
   }
 
-  private def parseBooleanExpr: Parser[(Expression, Expression) => BinaryOperation] = {
+  private def parseBooleanExpr: BinOpParser = {
     parseAnd | parseOr | parseLesserEquals | parseLesser | parseGreaterEquals | parseGreater
   }
 
-  private def parseMod: Parser[(Expression, Expression) => BinaryOperation] = {
-    Mod ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Mod, right) } }
-  }
+  /**
+   * Useful method which associate left and right expression and operator to an BinaryOperation
+   * @param op operator
+   * @param left left expression
+   * @param right right expression
+   * @return a BinaryOperation composed of left, op, right
+   */
+  def binOp(op: Operator)(left: Expression, right: Expression): BinaryOperation = BinaryOperation(left, op, right)
 
-  private def parseDivision: Parser[(Expression, Expression) => BinaryOperation] = {
-    Slash ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Slash, right) } }
-  }
+  /**
+   * Useful method which associate a token to an BinaryOperation
+   * @param sepToken token which separate left and right expressions
+   * @return a BinaryOperation parser of type Parser[(Expression, Expression) => BinaryOperation]
+   */
+  private def binOpParser(sepToken: Operator): BinOpParser = sepToken ^^^ binOp(sepToken)
 
-  private def parseEuclideanDivision: Parser[(Expression, Expression) => BinaryOperation] = {
-    Percent ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Percent, right) } }
-  }
+  //Useful type used to parse BinaryOperation
+  type BinOpParser = Parser[(Expression, Expression) => BinaryOperation]
 
-  private def parseAddition: Parser[(Expression, Expression) => BinaryOperation] = {
-    Plus ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Plus, right) } }
-  }
-
-  private def parseSubtraction: Parser[(Expression, Expression) => BinaryOperation] = {
-    Minus ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Minus, right) } }
-  }
-
-  private def parseMultiplication: Parser[(Expression, Expression) => BinaryOperation] = {
-    Mul ^^^ { (left: Expression, right: Expression) => (left, right) match { case (left: Expression, right: Expression) => BinaryOperation(left, Mul, right) } }
-  }
-
-  private def parseEquality: Parser[(Expression, Expression) => BinaryOperation] = {
-    Equals ^^^ { (left: Expression, right: Expression) => (left, right) match {
-      case (left: Expression, right: Expression) => BinaryOperation(left, Equals, right)
-    }}
-  }
-
-  private def parseInequality: Parser[(Expression, Expression) => BinaryOperation] = {
-    NotEquals ^^^ { (left: Expression, right: Expression) => (left, right) match {
-      case (left: Expression, right: Expression) => BinaryOperation(left, NotEquals, right)
-    }}
-  }
-
-  private def parseAnd: Parser[(Expression, Expression) => BinaryOperation] = {
-    And ^^^ { (left: Expression, right: Expression) => (left, right) match {
-      case (left: Expression, right: Expression) => BinaryOperation(left, And, right)
-    }}
-  }
-
-  private def parseOr: Parser[(Expression, Expression) => BinaryOperation] = {
-    Or ^^^ { (left: Expression, right: Expression) => (left, right) match {
-      case (left: Expression, right: Expression) => BinaryOperation(left, Or, right)
-    }}
-  }
-
-  private def parseLesser: Parser[(Expression, Expression) => BinaryOperation] = {
-    Lesser ^^^ { (left: Expression, right: Expression) => (left, right) match {
-      case (left: Expression, right: Expression) => BinaryOperation(left, Lesser, right)
-    }}
-  }
-
-  private def parseLesserEquals: Parser[(Expression, Expression) => BinaryOperation] = {
-    LesserEqual ^^^ { (left: Expression, right: Expression) => (left, right) match {
-      case (left: Expression, right: Expression) => BinaryOperation(left, LesserEqual, right)
-    }}
-  }
-
-  private def parseGreater: Parser[(Expression, Expression) => BinaryOperation] = {
-    Greater ^^^ { (left: Expression, right: Expression) => (left, right) match {
-      case (left: Expression, right: Expression) => BinaryOperation(left, Greater, right)
-    }}
-  }
-
-  private def parseGreaterEquals: Parser[(Expression, Expression) => BinaryOperation] = {
-    GreaterEqual ^^^ { (left: Expression, right: Expression) => (left, right) match {
-      case (left: Expression, right: Expression) => BinaryOperation(left, GreaterEqual, right)
-    }}
-  }
+  /*
+  All parsers of BinaryOperations with implicit, example :
+  def parseMod: BinOpParser = Mod ^^^ binOp(Mod) is equivalent to
+  def parseMod: BinOpParser = Mod ^^^ { (left, right) => BinaryOperation(left, Mod, right) }
+  because type of binOp is : binOP :: Token -> (Expression, Expression) -> BinaryOperation
+   */
+  private def parseMod: BinOpParser = binOpParser(Mod)
+  private def parseDivision: BinOpParser = binOpParser(Slash)
+  private def parseEuclideanDivision: BinOpParser = binOpParser(Percent)
+  private def parseAddition: BinOpParser = binOpParser(Plus)
+  private def parseSubtraction: BinOpParser = binOpParser(Minus)
+  private def parseMultiplication: BinOpParser = binOpParser(Mul)
+  private def parseEquality: BinOpParser = binOpParser(Equals)
+  private def parseInequality: BinOpParser = binOpParser(NotEquals)
+  private def parseAnd: BinOpParser = binOpParser(And)
+  private def parseOr: BinOpParser = binOpParser(Or)
+  private def parseLesser: BinOpParser = binOpParser(Less)
+  private def parseLesserEquals: BinOpParser = binOpParser(LesserEqual)
+  private def parseGreater: BinOpParser = binOpParser(Greater)
+  private def parseGreaterEquals: BinOpParser = binOpParser(GreaterEqual)
 
   private def parseGrouping: Parser[Expression] = {
     if (devDebugMode) println("try to parse grouping")
-    LeftParen ~ parseExpression ~ RightParen ^^ { case _ ~ expression ~ _ => expression }
+    LeftParen ~> parseExpression <~ RightParen
   }
 
   private def parseExpression: Parser[Expression] = {
@@ -204,7 +176,7 @@ class TokensParser extends Parsers {
     if (devDebugMode) println("try to parse type parameter")
     (parseIdentifier ~ opt(parseQuantifier) ~ DoublePoints ~ parseType) ^^ { case identifier ~ quantifier ~ _ ~ paramType => quantifier match {
       case Some(_) => TypeParameter(identifier, paramType, quantifier.get)
-      case None =>TypeParameter(identifier, paramType, fr.emalios.algointerpreter.eval.In)
+      case None => TypeParameter(identifier, paramType, fr.emalios.algointerpreter.eval.In)
     } }
   }
 
@@ -238,18 +210,28 @@ class TokensParser extends Parsers {
     rep1(EndOfLine) ^^^ EndOfLine
   }
 
+  def reader(tokens: Seq[Token]) = new TokenReader(tokens)
+
+  /**
+   * Method who try to generate an AST with tokens and if it does not succeed, it throws an error with the message provided by the lib.
+   * @param tokens seq of tokens used to gen AST
+   * @return an AST who represents a Program
+   */
   def apply(tokens: Seq[Token]): Program = {
-    val reader = new TokenReader(tokens)
-    parseProgram.apply(reader) match {
-      case NoSuccess(msg, _) => println(msg); null
+    this.parseProgram.apply(reader(tokens)) match {
+      case NoSuccess(msg, _) => throw AlgoParsingError(msg)
       case Success(result, _) => result
     }
   }
 
+  /**
+   * Method who try to generate an AST with tokens and if it does not succeed, it throws an error with the message provided by the lib.
+   * @param tokens seq of tokens used to gen AST
+   * @return an AST who represents an expression
+   */
   def applyInput(tokens: Seq[Token]): Expression = {
-    val reader = new TokenReader(tokens)
-    parseExpression.apply(reader) match {
-      case NoSuccess(msg, _) => println(msg); null
+    this.parseExpression.apply(reader(tokens)) match {
+      case NoSuccess(msg, _) => throw AlgoParsingError(msg)
       case Success(result, _) => result
     }
   }

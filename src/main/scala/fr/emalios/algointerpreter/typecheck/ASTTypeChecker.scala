@@ -1,18 +1,17 @@
 package fr.emalios.algointerpreter.typecheck
 
-import fr.emalios.algointerpreter.eval.{AlgoTypeCheckingError, BooleanValue, CharValue, FunctionApplication, IntegerValue, Quantifier, RealValue, StringValue, Value}
-import fr.emalios.algointerpreter.parser.{Algo, Assignment, BinaryOperation, Block, BooleanLiteral, ExprInstr, Expression, ForInstruction, Function, FunctionCall, FunctionDeclaration, Identifier, IfThenElseInstruction, Literal, Number, Program, Return, StringLiteral, TypeParameter, UnaryOperation, WhileInstruction}
-import fr.emalios.algointerpreter.token
-import fr.emalios.algointerpreter.token.{Affectation, And, CharTypeToken, Comma, Do, Dot, DoublePoints, Else, End, EndFor, EndIf, EndOfLine, EndWhile, Equals, False, For, From, Function, Greater, GreaterEqual, If, In, InOut, IntegerTypeToken, LEFT_BOX_BRACKET, LeftParen, Lesser, LesserEqual, Minus, Mod, Mul, Not, NotEquals, Or, Out, Percent, Plus, RIGHT_BOX_BRACKET, RealTypeToken, RightParen, Slash, Start, StartLoop, StringTypeToken, Then, To, True, While}
+import fr.emalios.algointerpreter.eval.AlgoTypeCheckingError
+import fr.emalios.algointerpreter.parser._
+import fr.emalios.algointerpreter.token.{Equals, Greater, GreaterEqual, Less, LesserEqual, Identifier => _, Literal => _}
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 class ASTTypeChecker {
-
-  private def reset() = {
+/*
+  private def reset(): Stack = {
     this.globalFrame.clear()
     this.globalFrame.addOne((Identifier("ecrire"), FunctionType(Option(Seq(TypeParameter(Identifier("to_print"), AnyType(), fr.emalios.algointerpreter.eval.In))), Option.empty)))
+    this.globalFrame.addOne((Identifier("lire"), FunctionType(Option.empty, Option(Undefined))))
     this.stack.clear()
     this.stack += new mutable.HashMap[Identifier, Type]()
   }
@@ -26,42 +25,13 @@ class ASTTypeChecker {
   private var stack: Stack = mutable.ArrayBuffer[Frame]()
   private val globalFrame: Frame = mutable.HashMap[Identifier, Type]()
 
-  def typecheckExpression(expression: Expression): Type = {
-    expression match {
-      case literal: Literal => literal match {
-        case StringLiteral(_) => StringType
-        case Number(_) => IntegerType
-        case BooleanLiteral(_) => BooleanType
-      }
-      case BinaryOperation(leftExpression, operator, rightExpression) =>
-        val expressionType = this.unify(leftExpression, rightExpression)
-        operator match {
-          case GreaterEqual => BooleanType
-          case LesserEqual => BooleanType
-          case Lesser => BooleanType
-          case Greater => BooleanType
-          case Equals => BooleanType
-          case _ => expressionType
-        }
-      case UnaryOperation(_, right) => this.typecheckExpression(right)
-      case FunctionCall(functionName, _) =>
-        if(!this.globalFrame.contains(functionName)) throw AlgoTypeCheckingError("Erreur: La fonction '" + functionName.value + "'' n'existe pas.")
-        this.globalFrame(functionName) match {
-          case FunctionType(_, returnType) => returnType.get
-        }
-      case identifier: Identifier =>
-        if(this.getCurrentFrame.contains(identifier)) this.getCurrentFrame(identifier)
-        else throw AlgoTypeCheckingError("Pas censé arriver")
-    }
-  }
-
   /**
    * Method who throw an error if expression's type are not equals to expected type
    * @param expression expression to test the type
    * @param expectedType expected type for expression
    */
   def typecheckExpression(expression: Expression, expectedType: Type): Unit = {
-    val expressionType = this.typecheckExpression(expression)
+    val expressionType = this.typeOf(expression)
     if(!expressionType.equals(expectedType)) this.typecheckExpressionError(expression, expectedType)
   }
 
@@ -73,9 +43,15 @@ class ASTTypeChecker {
     throw AlgoTypeCheckingError("Erreur: '" + expression1 + "'(" + type1 + ") n'est pas du même type que '" + expression2 + "'(" + type2 + "')")
   }
 
+  /**
+   * Method which assert that the types of two given expressions are the same and return it
+   * @param expression1 first expression
+   * @param expression2 other expression
+   * @return the type of all expressions
+   */
   def unify(expression1: Expression, expression2: Expression): Type = {
-    val type1 = this.typecheckExpression(expression1)
-    val type2 = this.typecheckExpression(expression2)
+    val type1 = this.typeOf(expression1)
+    val type2 = this.typeOf(expression2)
     if (!type1.equals(type2)) this.typecheckUnifyError(expression1, expression2, type1, type2)
     type1
   }
@@ -145,7 +121,7 @@ class ASTTypeChecker {
         }
       case Assignment(identifier, expression) =>
         if(currentFrame.contains(identifier)) this.typecheckExpression(expression, currentFrame(identifier))
-        else currentFrame.addOne((identifier, this.typecheckExpression(expression)))
+        else currentFrame.addOne((identifier, this.typeOf(expression)))
       case Return(expression) =>
         val name = functionName match {
           case Some(value) => value
@@ -189,5 +165,7 @@ class ASTTypeChecker {
   }
 
   private def getCurrentFrame: Frame = this.stack.last
+
+ */
 
 }

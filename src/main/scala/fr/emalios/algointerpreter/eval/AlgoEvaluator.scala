@@ -4,11 +4,11 @@ import fr.emalios.algointerpreter.Main.devDebugMode
 import fr.emalios.algointerpreter.lexer.AlgoLexer
 import fr.emalios.algointerpreter.parser._
 import fr.emalios.algointerpreter.parser.{Assignment, BinaryOperation, Block, BooleanLiteral, ExprInstr, Expression, FunctionCall, Identifier, Instruction, Literal, Number, StringLiteral, UnaryOperation}
-import fr.emalios.algointerpreter.token.{And, Equals, Greater, GreaterEqual, Lesser, LesserEqual, Minus, Mul, Not, NotEquals, Or, Plus}
+import fr.emalios.algointerpreter.token.{And, Equals, Greater, GreaterEqual, Less, LesserEqual, Minus, Mul, Not, NotEquals, Or, Plus}
 
 import scala.collection.mutable
 
-class ASTEvaluator() {
+class AlgoEvaluator() {
 
   //Type used at runtime
   type Frame = mutable.HashMap[Identifier, (Value, Quantifier)]
@@ -25,7 +25,7 @@ class ASTEvaluator() {
   private def readValue(): Value = {
     val scanner = new java.util.Scanner(System.in)
     val tokens = new AlgoLexer().apply(scanner.nextLine())
-    val expression = new TokensParser().applyInput(tokens)
+    val expression = new AlgoParser().applyInput(tokens)
     evalExpression(expression)._1.get
   }
 
@@ -128,7 +128,7 @@ class ASTEvaluator() {
         } else {
           elseBlock match {
             case Some(value) => blockValue = this.evalBlock(value)
-            case None =>
+            case None => //don't need to make something.
           }
         }
         this.callStack.remove(this.callStack.length-1)
@@ -188,7 +188,7 @@ class ASTEvaluator() {
           case Plus         => (Some(left + right), false)
           case Minus        => (Some(left - right), false)
           case Mul          => (Some(left * right), false)
-          case Lesser       => (Some(left < right), false)
+          case Less       => (Some(left < right), false)
           case LesserEqual  => (Some(left <= right), false)
           case Greater      => (Some(left > right), false)
           case GreaterEqual => (Some(left >= right), false)

@@ -31,7 +31,7 @@ class AlgoLexer extends RegexParsers {
    *
    * @return parser which associates a value which is matched by the regex with a Token which wraps this value.
    */
-  def literal: Parser[StringToken] = {
+  def stringLit: Parser[StringToken] = {
     """"[^"]*"""".r ^^ { str => val content = str.substring(1, str.length - 1)
       token.StringToken(content) }
   }
@@ -39,11 +39,11 @@ class AlgoLexer extends RegexParsers {
   /**
    * The value is matched here if it starts with a digit and contains digits.
    * As an example, for an entry `number <- 42`,
-   * the method will return a parser which associates 42 with NUMBER token which wraps 42.
+   * the method will return a parser which associates 42 with Number token which wraps 42.
    *
    * @return parser which associates a value which is matched by the regex with a Token which wraps this value.
    */
-  def number: Parser[IntegerToken] = {
+  def numberLit: Parser[IntegerToken] = {
     "[0-9]+".r ^^ { str =>
       IntegerToken(Integer.parseInt(str))
     }
@@ -80,7 +80,7 @@ class AlgoLexer extends RegexParsers {
   /**
    * The value is matched here if it starts with a letter and contains letters, numbers or the character '_'.
    * As an example, for an entry "number <- 42",
-   * the method will return a parser which associates "number" with IDENTIFIER token which wraps "number".
+   * the method will return a parser which associates "number" with Identifier token which wraps "number".
    *
    * @return parser which associates a value which is matched by the regex with a Token which wraps this value.
    */
@@ -91,39 +91,33 @@ class AlgoLexer extends RegexParsers {
   }
 
   /**
-   *
    * @return parser which associates a end of line character matched by the regex with the EndOfLine token.
    */
   def parseEndOfLine: Parser[Token] = {
     "\r?\n".r ^^^ EndOfLine
   }
 
-  /** TODO: rewrite
-   * As we have a finite list of tokens, we assign each token to its literal value.
-   *
-   * @return parser which associates a token with to its literal value.
-   */
   def operator: Parser[Token] = {
     (
       "<-" ^^^ Affectation
         | "mod" ^^^ Mod
         | "=" ^^^ Equals
         | "%" ^^^ Percent
-      | ":" ^^^ DoublePoints
-      | "+" ^^^ Plus
-      | "-" ^^^ Minus
-      | "*" ^^^ Mul
-      | "/" ^^^ Slash
+        | ":" ^^^ DoublePoints
+        | "+" ^^^ Plus
+        | "-" ^^^ Minus
+        | "*" ^^^ Mul
+        | "/" ^^^ Slash
         | "<=" ^^^ LesserEqual
         | ">=" ^^^ GreaterEqual
-      | "<" ^^^ Lesser
-      | ">" ^^^ Greater
-      | "et" ^^^ And
-      | "ou" ^^^ Or
-      | "," ^^^ Comma
-      | "(" ^^^ LeftParen
-      | ")" ^^^ RightParen
-      | "!=" ^^^ NotEquals
+        | "<" ^^^ Less
+        | ">" ^^^ Greater
+        | "et" ^^^ And
+        | "ou" ^^^ Or
+        | "," ^^^ Comma
+        | "(" ^^^ LeftParen
+        | ")" ^^^ RightParen
+        | "!=" ^^^ NotEquals
         | "!" ^^^ Not
       )
   }
@@ -133,12 +127,12 @@ class AlgoLexer extends RegexParsers {
    * @return a set of tokens
    */
   def tokens: Parser[List[Token]] = {
-    phrase(rep1(operator | identifierOrKeyword | parseEndOfLine | literal | number))
+    phrase(rep1(operator | identifierOrKeyword | parseEndOfLine | stringLit | numberLit))
   }
 
   def apply(code: String): List[Token] = {
     parse(tokens, code) match {
-      case NoSuccess(msg, _) => println(msg); null
+      case NoSuccess(msg, _) => throw AlgoLexerError(msg)
       case Success(result, _) => result
     }
   }

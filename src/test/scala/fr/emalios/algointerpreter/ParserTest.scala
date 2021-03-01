@@ -8,7 +8,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class ParserTest extends FunSuite with BeforeAndAfter {
 
-  val tokensParser: TokensParser = new TokensParser()
+  val tokensParser: AlgoParser = new AlgoParser()
 
   test("function call does not pass parsing") {
     var input = List(Start, EndOfLine, token.Identifier("f"), LeftParen, RightParen, EndOfLine, End)
@@ -30,8 +30,8 @@ class ParserTest extends FunSuite with BeforeAndAfter {
     var input = List(Start, EndOfLine, token.Identifier("x"), Affectation, IntegerToken(1), Plus, LeftParen, IntegerToken(1), Minus, IntegerToken(1), RightParen, Mul, IntegerToken(1), Slash, IntegerToken(1), Percent, IntegerToken(1), EndOfLine, token.Identifier("y"), Affectation, BooleanToken(false), And, BooleanToken(true), Or, BooleanToken(false), EndOfLine, End)
     def output = this.tokensParser.apply(input)
     assert(output === Program(Algo(Block(List(Assignment(parser.Identifier("x"),BinaryOperation(Number(1),Plus,BinaryOperation(BinaryOperation(BinaryOperation(BinaryOperation(Number(1),Minus,Number(1)),Mul,Number(1)),Slash,Number(1)),Percent,Number(1)))), Assignment(parser.Identifier("y"),BinaryOperation(BinaryOperation(BooleanLiteral(false),And,BooleanLiteral(true)),Or,BooleanLiteral(false)))))),List()))
-    input = List(Start, EndOfLine, token.Identifier("x"), Affectation, IntegerToken(1), Mod, IntegerToken(5), EndOfLine, token.Identifier("y"), Affectation, LeftParen, IntegerToken(5), LesserEqual, IntegerToken(5), GreaterEqual, IntegerToken(5), Greater, IntegerToken(5), Lesser, IntegerToken(5), Equals, BooleanToken(true), RightParen, EndOfLine, End)
-    assert(output === Program(Algo(Block(List(Assignment(parser.Identifier("x"),BinaryOperation(Number(1),Mod,Number(5))), Assignment(parser.Identifier("y"),BinaryOperation(BinaryOperation(BinaryOperation(BinaryOperation(BinaryOperation(Number(5),LesserEqual,Number(5)),GreaterEqual,Number(5)),Greater,Number(5)),Lesser,Number(5)),Equals,BooleanLiteral(true)))))),List()))
+    input = List(Start, EndOfLine, token.Identifier("x"), Affectation, IntegerToken(1), Mod, IntegerToken(5), EndOfLine, token.Identifier("y"), Affectation, LeftParen, IntegerToken(5), LesserEqual, IntegerToken(5), GreaterEqual, IntegerToken(5), Greater, IntegerToken(5), Less, IntegerToken(5), Equals, BooleanToken(true), RightParen, EndOfLine, End)
+    assert(output === Program(Algo(Block(List(Assignment(parser.Identifier("x"),BinaryOperation(Number(1),Mod,Number(5))), Assignment(parser.Identifier("y"),BinaryOperation(BinaryOperation(BinaryOperation(BinaryOperation(BinaryOperation(Number(5),LesserEqual,Number(5)),GreaterEqual,Number(5)),Greater,Number(5)),Less,Number(5)),Equals,BooleanLiteral(true)))))),List()))
   }
 
   test("if instruction does not pass parsing") {
@@ -56,6 +56,7 @@ class ParserTest extends FunSuite with BeforeAndAfter {
     assert(output === Program(Algo(Block(List(Assignment(parser.Identifier("i"),Number(1)), WhileInstruction(BinaryOperation(parser.Identifier("i"),NotEquals,Number(0)),Block(List(Assignment(parser.Identifier("i"),BinaryOperation(parser.Identifier("i"),Minus,Number(1))))))))),List()))
   }
 
+  //TODO: invest about why it dont pass
   test("function declaration does not pass parsing") {
     val input = List(Start, EndOfLine, token.Identifier("f"), LeftParen, IntegerToken(1), Comma, StringToken("truc"), RightParen, EndOfLine, End, EndOfLine, token.Function, token.Identifier("f"), LeftParen, token.Identifier("x"), DoublePoints, IntegerTypeToken, Comma, token.Identifier("s"), DoublePoints, StringTypeToken, RightParen, DoublePoints, BooleanTypeToken, EndOfLine, Start, EndOfLine, token.Return, BooleanToken(true), EndOfLine, End)
     def output = this.tokensParser.apply(input)
