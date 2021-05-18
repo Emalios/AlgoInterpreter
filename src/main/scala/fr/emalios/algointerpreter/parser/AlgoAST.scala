@@ -2,7 +2,7 @@ package fr.emalios.algointerpreter.parser
 
 import fr.emalios.algointerpreter.eval.Quantifier
 import fr.emalios.algointerpreter.token.{Operator, Token, UnaryOperator}
-import fr.emalios.algointerpreter.typecheck.{FunctionType, Type}
+import fr.emalios.algointerpreter.typecheck.algow.{FunctionType, Type}
 
 sealed trait AlgoAST
 sealed trait Expression extends AlgoAST
@@ -33,4 +33,3 @@ case class TypeParameter(name: Identifier, paramType: Type, quantifier: Quantifi
 case class FunctionCall(functionName: Identifier, args: List[Expression]) extends Expression
 case class FunctionDeclaration(functionName: Identifier, functionType: FunctionType)
 case class ExprInstr(e: Expression) extends Instruction
-case class TypedLiteral(typeOf: Type, literal: Literal) extends Literal

@@ -1,4 +1,4 @@
-package fr.emalios.algointerpreter.typecheck
+package fr.emalios.algointerpreter.typecheck.algow
 
 import fr.emalios.algointerpreter.parser.TypeParameter
 
@@ -36,10 +36,20 @@ case class AnyType() extends Type {
 }
 case class TVar(name: String) extends Type {
   override def showType(): String = name
+
+  override def equals(o: Any): Boolean = o match {
+    case tVar: TVar => tVar.name.equals(this.name)
+    case _ => false
+  }
 }
+
+case object UnitType extends Type {
+  override def showType(): String = "unit"
+}
+
 case object Undefined extends Type {
   override def showType(): String = "undefined"
 }
-case class FunctionType(parametersType: Option[Seq[TypeParameter]], returnType: Option[Type]) extends Type {
+case class FunctionType(parametersType: Seq[TypeParameter], returnType: Type) extends Type {
   override def showType(): String = s"function $parametersType $returnType"
 }

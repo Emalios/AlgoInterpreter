@@ -4,7 +4,8 @@ import fr.emalios.algointerpreter.eval.AlgoTypeCheckingError
 import fr.emalios.algointerpreter.lexer.AlgoLexer
 import fr.emalios.algointerpreter.parser._
 import fr.emalios.algointerpreter.token.{And, Equals, Greater, GreaterEqual, Less, LesserEqual, Minus, Mod, Mul, Not, Or, Percent, Plus, Slash}
-import fr.emalios.algointerpreter.typecheck.{ASTTypeChecker, BooleanType, FunctionType, IntegerType, StringType}
+import fr.emalios.algointerpreter.typecheck.ASTTypeChecker
+import fr.emalios.algointerpreter.typecheck.algow.{BooleanType, FunctionType, IntegerType, StringType}
 import org.scalatest.FunSuite
 
 class TypeCheckTest extends FunSuite {
@@ -45,9 +46,9 @@ class TypeCheckTest extends FunSuite {
   }
 
   test("expr function call does not pass typechecking") {
-    var ast = Program(Algo(Block(List(Assignment(Identifier("x"),FunctionCall(Identifier("f"),List(Number(1), StringLiteral("str")))), Assignment(Identifier("x"),BooleanLiteral(false))))),List(Function(FunctionDeclaration(Identifier("f"),FunctionType(Some(List(TypeParameter(Identifier("x"),IntegerType, eval.In), TypeParameter(Identifier("s"),StringType,eval.In))),Some(BooleanType))),Algo(Block(List(Return(BooleanLiteral(true))))))))
+    var ast = Program(Algo(Block(List(Assignment(Identifier("x"),FunctionCall(Identifier("f"),List(Number(1), StringLiteral("str")))), Assignment(Identifier("x"),BooleanLiteral(false))))),List(Function(FunctionDeclaration(Identifier("f"),FunctionType(List(TypeParameter(Identifier("x"),IntegerType, eval.In), TypeParameter(Identifier("s"),StringType,eval.In)),BooleanType)),Algo(Block(List(Return(BooleanLiteral(true))))))))
     //this.typechecker.typecheckAST(ast)
-    ast = Program(Algo(Block(List(Assignment(Identifier("x"),FunctionCall(Identifier("f"),List(Number(1), StringLiteral("str")))), Assignment(Identifier("x"),Number(1))))),List(Function(FunctionDeclaration(Identifier("f"),FunctionType(Some(List(TypeParameter(Identifier("x"),IntegerType, eval.In), TypeParameter(Identifier("s"),StringType,eval.In))),Some(BooleanType))),Algo(Block(List(Return(BooleanLiteral(true))))))))
+    ast = Program(Algo(Block(List(Assignment(Identifier("x"),FunctionCall(Identifier("f"),List(Number(1), StringLiteral("str")))), Assignment(Identifier("x"),Number(1))))),List(Function(FunctionDeclaration(Identifier("f"),FunctionType(List(TypeParameter(Identifier("x"),IntegerType, eval.In), TypeParameter(Identifier("s"),StringType,eval.In)),BooleanType)),Algo(Block(List(Return(BooleanLiteral(true))))))))
     intercept[AlgoTypeCheckingError] {
       //this.typechecker.typecheckAST(ast)
     }
