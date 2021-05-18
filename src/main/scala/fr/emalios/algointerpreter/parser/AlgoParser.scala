@@ -4,8 +4,9 @@ import fr.emalios.algointerpreter.Main.devDebugMode
 import fr.emalios.algointerpreter.eval.Quantifier
 import fr.emalios.algointerpreter.{parser, token}
 import fr.emalios.algointerpreter.token._
-import fr.emalios.algointerpreter.typecheck.{BooleanType, CharType, FunctionType, IntegerType, RealType, StringType, Type}
+import fr.emalios.algointerpreter.typecheck.algow.{BooleanType, CharType, FunctionType, IntegerType, RealType, StringType, Type, UnitType}
 
+import scala.language.postfixOps
 import scala.util.parsing.combinator.Parsers
 
 class AlgoParser extends Parsers {
@@ -102,7 +103,7 @@ class AlgoParser extends Parsers {
 
   private def parseExpression: Parser[Expression] = {
     if (devDebugMode) println("try to parse expression")
-    parseFunctionCall | parseUnary | parseBinary | parseLiteral | parseGrouping
+    parseGrouping | parseBinary | parseUnary | parseFunctionCall | parseLiteral
   }
 
   private def parseExprFunctionCall: Parser[ExprInstr] = {
@@ -159,7 +160,17 @@ class AlgoParser extends Parsers {
 
   private def parseFunctionDeclaration: Parser[FunctionDeclaration] = {
     if (devDebugMode) println("try to parse function declaration")
-    (Function ~> parseIdentifier <~ LeftParen) ~ opt(parseTypeParameters) ~ (RightParen ~> opt(parseReturnType)) ^^ { case identifier ~ typeParameters ~ returnType => FunctionDeclaration(identifier, FunctionType(typeParameters, returnType)) }
+    (Function ~> parseIdentifier <~ LeftParen) ~ opt(parseTypeParameters) ~ (RightParen ~> opt(parseReturnType)) ^^ { case identifier ~ typeParameters ~ returnType =>
+      println(typeParameters)
+      val rType = returnType match {
+        case Some(value) => value
+        case None => UnitType
+      }
+      typeParameters match {
+        case Some(value) => FunctionDeclaration(identifier, FunctionType(value, rType))
+        case None => FunctionDeclaration(identifier, FunctionType(Seq.empty, rType))
+      }
+    }
   }
 
   private def parseReturnType: Parser[Type] = {

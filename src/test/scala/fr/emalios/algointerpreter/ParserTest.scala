@@ -3,7 +3,7 @@ package fr.emalios.algointerpreter
 import fr.emalios.algointerpreter.lexer.AlgoLexer
 import fr.emalios.algointerpreter.parser._
 import fr.emalios.algointerpreter.token._
-import fr.emalios.algointerpreter.typecheck.{BooleanType, FunctionType, IntegerType, StringType}
+import fr.emalios.algointerpreter.typecheck.algow.{BooleanType, FunctionType, IntegerType, StringType}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class ParserTest extends FunSuite with BeforeAndAfter {
@@ -60,7 +60,7 @@ class ParserTest extends FunSuite with BeforeAndAfter {
   test("function declaration does not pass parsing") {
     val input = List(Start, EndOfLine, token.Identifier("f"), LeftParen, IntegerToken(1), Comma, StringToken("truc"), RightParen, EndOfLine, End, EndOfLine, token.Function, token.Identifier("f"), LeftParen, token.Identifier("x"), DoublePoints, IntegerTypeToken, Comma, token.Identifier("s"), DoublePoints, StringTypeToken, RightParen, DoublePoints, BooleanTypeToken, EndOfLine, Start, EndOfLine, token.Return, BooleanToken(true), EndOfLine, End)
     def output = this.tokensParser.apply(input)
-    assert(output === Program(Algo(Block(List(ExprInstr(FunctionCall(parser.Identifier("f"),List(Number(1), StringLiteral("truc"))))))),List(parser.Function(FunctionDeclaration(parser.Identifier("f"),FunctionType(Some(List(TypeParameter(parser.Identifier("x"),IntegerType, eval.In), TypeParameter(parser.Identifier("s"),StringType, eval.In))),Some(BooleanType))),Algo(Block(List(parser.Return(BooleanLiteral(true)))))))))
+    assert(output === Program(Algo(Block(List(ExprInstr(FunctionCall(parser.Identifier("f"),List(Number(1), StringLiteral("truc"))))))),List(parser.Function(FunctionDeclaration(parser.Identifier("f"),FunctionType(List(TypeParameter(parser.Identifier("x"),IntegerType, eval.In), TypeParameter(parser.Identifier("s"),StringType, eval.In)),BooleanType)),Algo(Block(List(parser.Return(BooleanLiteral(true)))))))))
   }
 
 }

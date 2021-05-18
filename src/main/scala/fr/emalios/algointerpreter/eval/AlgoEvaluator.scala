@@ -142,7 +142,7 @@ class AlgoEvaluator() {
         case (PrimFunction(function), _) => (Option(function.apply(values.map(this.evalExpression).map(optionalValue => optionalValue._1.get))), false)
         case (FunctionApplication(declaration, block), _) =>
           val frame: Frame = this.callStack.head.clone()
-          for ((typeParameter, value) <- declaration.functionType.parametersType.get zip values) {
+          for ((typeParameter, value) <- declaration.functionType.parametersType zip values) {
             val expressionValue: Value = this.evalExpression(value)._1.get
             frame.addOne((typeParameter.name, (expressionValue, typeParameter.quantifier)))
           }
