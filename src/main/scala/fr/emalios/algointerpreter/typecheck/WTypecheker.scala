@@ -53,8 +53,8 @@ class WTypecheker {
         case None => tVar
       }
       case FunctionType(parametersType, returnType) =>
-        val paramSubs: Seq[TypeParameter] = Seq.empty
-        parametersType.foreach(paramType => paramSubs.+:(TypeParameter(paramType.name, this.apply(paramType.paramType)(subst), paramType.quantifier)))
+        var paramSubs: Seq[TypeParameter] = Seq.empty
+        parametersType.foreach(paramType => paramSubs = paramSubs :+ TypeParameter(paramType.name, this.apply(paramType.paramType)(subst), paramType.quantifier))
         val returnSubs: Type = this.apply(returnType)(subst)
         FunctionType(paramSubs, returnSubs)
       case _ => typeOf
