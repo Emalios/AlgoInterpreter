@@ -1,0 +1,6 @@
+Debut
+ x <- 5 + 2
+ y <- x + 6
+ b <- vrai
+ c <- x = y
+Fin
