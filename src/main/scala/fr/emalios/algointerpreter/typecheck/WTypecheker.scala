@@ -196,22 +196,20 @@ class WTypecheker {
           }
         }
       case FunctionCall(functionName, args) =>
-        //TODO: repenser le design, je ne suis pas sur que tout ici soit à sa place, je pense que du code présent ici devrait plutôt se trouver dans typeInference
         val tVar = this.newTVar('t')
         funTypeEnv.get(functionName.value) match {
-          case Some((ftvs, typeOf)) => typeOf match {
+          case Some((_, typeOf)) => typeOf match {
             case funType@FunctionType(parametersType, returnType) =>
               //On s'assure en premier qu'on a donné assez d'arguments et qu'on n'en donne pas trop.
               if(parametersType.size != args.size) throw AlgoTypeCheckingError(s"Erreur: Nombre d'arguments incorrect pour la fonction '${functionName.value}', elle en demande ${parametersType.size} mais en reçoit ${args.size}")
               //Ensuite on s'assure que les types des arguments données correspondent bien à ce qu'attends la fonction
+              var substResult = this.nullSubst
               for((exprArg, expectedType) <- args zip parametersType) {
+                val (exprSubst, exprType) = this.ti(typeEnv, exprArg)
+                val subst = this.composeSubst(exprSubst, this.mgu(exprType, expectedType.paramType))
+                substResult = this.composeSubst(substResult, subst)
               }
-              val (subst, exprType) = this.ti(typeEnv, functionName)
-              println(s"functionType before instantiate: ${funType.showType()}")
-              val functionType = this.instantiate(this.ftv(exprType).toList, exprType)
-              println(s"functionType after instantiate: ${functionType.showType()}")
-              val s3 = this.mgu(functionType, FunctionType(Seq(), tVar))
-              (this.composeSubst(s3, subst), this.apply(tVar)(s3))
+              (substResult, returnType)
             case _ => throw AlgoTypeCheckingError(s"Erreur: Un type (${typeOf.showType()}) présent dans l'environnement de type des fonctions n'est pas un fonction.")
           }
           case None => throw AlgoTypeCheckingError(s"Fonction '${functionName.value}' non trouvé dans le scope.")
