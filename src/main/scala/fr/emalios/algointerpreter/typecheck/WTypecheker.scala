@@ -224,6 +224,12 @@ class WTypecheker {
   }
 
   def typeInference(block: Block, expectedType: Type): Unit = {
+    /*
+    Si le type de retour du block attendu existe (c'est-à-dire si le type n'est pas 'UnitType') alors le block doit contenir au moins une instruction 'Return'.
+    Ainsi, pour gérer cela, je crée une variable booléenne qui vaudra vrai si une instruction 'Return' a été typecheck, sinon false et à la fin du tc du block
+    si le type attendu n'est pas 'UnitType' et que cette la valeur de cette variable est à false, alors il y a une erreur.
+     */
+    var blockHasReturn = false
     var newTypeEnv = this.getCurrentTypeEnv
     block.instructions.foreach {
       case IfThenElseInstruction(cond, thenBlock, elseBlock) =>
@@ -269,17 +275,24 @@ class WTypecheker {
         this.typeEnvStack.addOne(newTypeEnv)
       case Return(expression) =>
         expectedType match {
-          case UnitType => throw AlgoTypeCheckingError("Erreur: Le bloc retourne quelque chose alors qu'il ne devrait pas.")
+          case UnitType => throw AlgoTypeCheckingError(s"Erreur: Le block renvoit une valeur alors qu'il ne doit pas.")
           case _ =>
-            val (_, typeOf) = this.typeInference(newTypeEnv, expression)
-            this.mgu(typeOf, expectedType)
-            /*
-            Je pense que cette ligne ne sert à rien puisque si l'algorithme n'arrive pas à trouver une substitution pour passer du type de l'expression au type que la fonction doit renvoyé, il va throw une erreur
-            Il serait intéressant de réfléchir à une meilleur erreur à afficher dans ce contexte, c'est-à-dire que la fonction ne renvoit pas ce qu'elle doit renvoyer, on pourrait avoir une erreur plus précise pour ce cas particulier
-             */
-            //if(this.apply(typeOf)(subst) != expectedType) throw AlgoTypeCheckingError(s"Erreur: La fonction doit retourner une variable de type '${expectedType.showType()}' mais elle renvoie un type '${typeOf.showType()}'")
         }
+        val (_, typeOf) = this.typeInference(newTypeEnv, expression)
+        this.mgu(typeOf, expectedType)
+        blockHasReturn = true
+        /*
+        Je pense que cette ligne ne sert à rien puisque si l'algorithme n'arrive pas à trouver une substitution pour passer du type de l'expression au type que la fonction doit renvoyé, il va throw une erreur
+        Il serait intéressant de réfléchir à une meilleur erreur à afficher dans ce contexte, c'est-à-dire que la fonction ne renvoit pas ce qu'elle doit renvoyer, on pourrait avoir une erreur plus précise pour ce cas particulier
+        */
+        //if(this.apply(typeOf)(subst) != expectedType) throw AlgoTypeCheckingError(s"Erreur: La fonction doit retourner une variable de type '${expectedType.showType()}' mais elle renvoie un type '${typeOf.showType()}'")
       case ExprInstr(e) =>
+    }
+    //On teste si le block doit renvoyer ou non une valeur
+    expectedType match {
+      case UnitType =>
+      case _        if !blockHasReturn => throw AlgoTypeCheckingError(s"Erreur: Le block doit renvoyer une valeur de type '${expectedType.showType()}' mais il ne contient aucune instruction 'Return'.")
+      case _ =>
     }
     //On va tester ici, c'est-à-dire quand on finis de typecheck un block s'il reste dans le typeenv associé à ce block une variable dont le type n'a pas été inféré
     //s'il en reste une alors sa déclaration est ambigüe et on le signale à l'utilisateur vià une erreur.
