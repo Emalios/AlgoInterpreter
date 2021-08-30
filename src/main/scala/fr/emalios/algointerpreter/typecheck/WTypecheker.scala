@@ -1,7 +1,7 @@
 package fr.emalios.algointerpreter.typecheck
 
 import fr.emalios.algointerpreter.Main.{debugMode, devDebugMode}
-import fr.emalios.algointerpreter.eval.{AlgoTypeCheckingError, In, InOut}
+import fr.emalios.algointerpreter.eval.{In, InOut}
 import fr.emalios.algointerpreter.parser
 import fr.emalios.algointerpreter.parser.{AlgoAST, Assignment, BinaryOperation, Block, BooleanLiteral, ExprInstr, Expression, ForInstruction, FunctionCall, Identifier, IfThenElseInstruction, Literal, Program, Return, ReturnType, StringLiteral, TypeParameter, TypedExpression, UnaryOperation, WhileInstruction}
 import fr.emalios.algointerpreter.token.{And, Equals, Greater, GreaterEqual, Less, LesserEqual, Minus, Mod, Mul, Not, NotEquals, Or, Percent, Plus, Slash, UnaryOperator}
@@ -151,7 +151,7 @@ class WTypecheker {
   def ti(typeEnv: TypeEnv, expr: Expression): (Subst, Type) = {
     expr match {
       case literal: Literal => this.tiLit(literal)
-      case BinaryOperation(leftExpression, operator, rightExpression) =>
+      case binExpr@BinaryOperation(leftExpression, operator, rightExpression) =>
         val (lSubst, lType) = this.ti(typeEnv, leftExpression)
         val (rSubst, rType) = this.ti(typeEnv, rightExpression)
         val (rExpectedType, lExpectedType, exprType) = operator match {
@@ -173,23 +173,29 @@ class WTypecheker {
           case NotEquals => (IntegerType, IntegerType, BooleanType)
         }
         val lSubUnify = this.mgu(lType, lExpectedType)
+        leftExpression.typeOf = Option(rExpectedType)
         val lFinalSubst = this.composeSubst(lSubst, lSubUnify)
         val rSubUnify = this.mgu(rType, rExpectedType)
+        rightExpression.typeOf = Option(rExpectedType)
         val rFinalSubst = this.composeSubst(rSubst, rSubUnify)
         val finalSubst = this.composeSubst(lFinalSubst, rFinalSubst)
+        binExpr.typeOf = Option(exprType)
         (finalSubst, exprType)
-      case UnaryOperation(operator, right) =>
+      case unaryExpr@UnaryOperation(operator, right) =>
         val (subRHS, rhsTy) = this.ti(typeEnv, right)
         val expectedTy = operator match {
           case Minus => IntegerType
           case Not => BooleanType
         }
         val subUnify = this.mgu(rhsTy, expectedTy)
+        unaryExpr.typeOf = Option(expectedTy)
         val finalSubst = this.composeSubst(subRHS, subUnify)
         (finalSubst, this.apply(rhsTy)(finalSubst))
-      case Identifier(id) =>
+      case identifier@Identifier(id) =>
         typeEnv.get(id) match {
-          case Some((_, typeOf)) => (this.nullSubst, typeOf)
+          case Some((_, typeOf)) =>
+            identifier.typeOf = Option(typeOf)
+            (this.nullSubst, typeOf)
           case None => funTypeEnv.get(id) match {
             case Some(value) => (this.nullSubst, value._2)
             case None => throw AlgoTypeCheckingError(s"Variable '$id' non trouvé dans le scope actuel.")
@@ -207,6 +213,7 @@ class WTypecheker {
               for((exprArg, expectedType) <- args zip parametersType) {
                 val (exprSubst, exprType) = this.ti(typeEnv, exprArg)
                 val subst = this.composeSubst(exprSubst, this.mgu(exprType, expectedType.paramType))
+                exprArg.typeOf = Option(exprType)
                 substResult = this.composeSubst(substResult, subst)
               }
               (substResult, returnType)
@@ -234,7 +241,9 @@ class WTypecheker {
     block.instructions.foreach {
       case IfThenElseInstruction(cond, thenBlock, elseBlock) =>
         val (subst, typeOf) = this.typeInference(newTypeEnv, cond)
+        /* on s'assure que c'est bien une expression booléenne */
         val condSubst = this.mgu(typeOf, BooleanType)
+        cond.typeOf = Option(BooleanType)
         newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
         this.typeEnvStack.addOne(newTypeEnv)
         this.typeInference(thenBlock, UnitType)
@@ -248,7 +257,9 @@ class WTypecheker {
         }
       case WhileInstruction(cond, block) =>
         val (subst, typeOf) = this.typeInference(newTypeEnv, cond)
+        /* on s'assure que c'est bien une expression booléenne */
         val condSubst = this.mgu(typeOf, BooleanType)
+        cond.typeOf = Option(BooleanType)
         newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
         this.printTypeEnv(newTypeEnv)
         this.typeEnvStack.addOne(newTypeEnv)
@@ -258,8 +269,11 @@ class WTypecheker {
         val (exprFromSubst, fromType) = this.typeInference(newTypeEnv, from)
         val (exprToSubst, toType)     = this.typeInference(newTypeEnv, to)
         newTypeEnv.addOne((id.value, (List.empty, IntegerType)))
+        /* on s'assure que c'est bien une expression entière */
         val fromSubst = this.composeSubst(exprFromSubst, this.mgu(fromType, IntegerType))
         val toSubst   = this.composeSubst(exprToSubst, this.mgu(toType, IntegerType))
+        from.typeOf = Option(IntegerType)
+        to.typeOf = Option(IntegerType)
         newTypeEnv = this.apply(newTypeEnv)(this.mgu(toType, IntegerType))
         newTypeEnv = this.apply(newTypeEnv)(fromSubst)
         newTypeEnv = this.apply(newTypeEnv)(toSubst)
@@ -267,8 +281,10 @@ class WTypecheker {
         this.typeEnvStack.addOne(newTypeEnv)
         this.typeInference(block, UnitType)
         this.popEnv()
-      case Assignment(identifier, expression) =>
+      case assignment@Assignment(identifier, expression) =>
         val (subst, typeOf) = this.typeInference(newTypeEnv, expression)
+        identifier.typeOf = Option(typeOf)
+        expression.typeOf = Option(typeOf)
         newTypeEnv = this.apply(newTypeEnv)(subst)
         newTypeEnv.addOne(identifier.value -> (List.empty[String], typeOf))
         this.popEnv()
@@ -279,7 +295,9 @@ class WTypecheker {
           case _ =>
         }
         val (_, typeOf) = this.typeInference(newTypeEnv, expression)
+        /* On s'assure que le type de la variable renvoyé est bien le type que la fonction doit retourner */
         this.mgu(typeOf, expectedType)
+        expression.typeOf = Option(expectedType)
         blockHasReturn = true
         /*
         Je pense que cette ligne ne sert à rien puisque si l'algorithme n'arrive pas à trouver une substitution pour passer du type de l'expression au type que la fonction doit renvoyé, il va throw une erreur
@@ -311,16 +329,16 @@ class WTypecheker {
   type TypeEnvStack = mutable.ArrayBuffer[TypeEnv]
 
   def typeInference(program: Program): Unit = {
-    program.declaredFunction.foreach(f => {
-      val fId = f.declaration.functionName
-      val fType = f.declaration.functionType
+    program.declaredFunction.foreach(function => {
+      val fId = function.declaration.functionName
+      val fType = function.declaration.functionType
       println(s"On ajoute la fonction à l'env des fonctions: ${fType.showType()}")
       funTypeEnv += (fId.value -> (List.empty[String], fType))
       //On ajoute les types demandés par la fonction dans l'environnement de type actuel de manière à ce que ces variables soient accessible dans le corps de la fonction
       fType.parametersType.foreach(paramType => {
         this.getCurrentTypeEnv.addOne((paramType.name.value, (List.empty[String], paramType.paramType)))
       })
-      this.typeInference(f.algo.block, fType.returnType)
+      this.typeInference(function.algo.block, fType.returnType)
     })
     this.typeInference(program.mainAlgo.block, UnitType)
   }
