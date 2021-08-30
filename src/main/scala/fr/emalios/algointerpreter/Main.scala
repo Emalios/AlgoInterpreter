@@ -1,9 +1,11 @@
 package fr.emalios.algointerpreter
 
+import fr.emalios.algointerpreter.eval.AlgoEvaluator
 import fr.emalios.algointerpreter.lexer.AlgoLexer
 import fr.emalios.algointerpreter.parser._
+import fr.emalios.algointerpreter.token.{Minus, Plus}
 import fr.emalios.algointerpreter.typecheck.WTypecheker
-import fr.emalios.algointerpreter.typecheck.algow.{FunctionType, TVar, Type, Undefined}
+import fr.emalios.algointerpreter.typecheck.algow.{FunctionType, IntegerType, TVar, Type, Undefined}
 
 import scala.io.Source
 
@@ -13,8 +15,8 @@ object Main extends AlgoLexer {
   val debugMode = false
 
   def main(args: Array[String]): Unit = {
-
-    val lexer:AlgoLexer = new AlgoLexer
+    val lexer: AlgoLexer = new AlgoLexer()
+    /* Get code from input source */
     val filename = "input.txt"
     val source = Source.fromFile(filename)
     var code = ""
@@ -22,15 +24,24 @@ object Main extends AlgoLexer {
       code = code ++ line ++ "\n"
     source.close()
     println(code)
+
+    /* token generation */
     val tokens = lexer.apply(code)
     println(s"Tokens: $tokens")
 
-    val parser: AlgoParser = new AlgoParser
+    /* ast generation */
+    val parser: AlgoParser = new AlgoParser()
     val ast = parser.apply(tokens)
     println(s"AST: $ast")
 
-    val typechecker = new WTypecheker
+    /* typecheck */
+    val typechecker = new WTypecheker()
     typechecker.typeInference(ast)
+    ast.mainAlgo.block.instructions.foreach(println)
+
+    /* runtime */
+    val evaluator = new AlgoEvaluator()
+    evaluator.evalProgram(ast)
   }
 
 }

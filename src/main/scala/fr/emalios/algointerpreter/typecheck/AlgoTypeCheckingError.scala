@@ -1,4 +1,4 @@
-package fr.emalios.algointerpreter.eval
+package fr.emalios.algointerpreter.typecheck
 
 case class AlgoTypeCheckingError(msg: String) extends Error(msg: String) {
 

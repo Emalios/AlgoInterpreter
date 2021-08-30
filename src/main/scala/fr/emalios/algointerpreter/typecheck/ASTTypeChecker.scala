@@ -1,6 +1,5 @@
 package fr.emalios.algointerpreter.typecheck
 
-import fr.emalios.algointerpreter.eval.AlgoTypeCheckingError
 import fr.emalios.algointerpreter.parser._
 import fr.emalios.algointerpreter.token.{Equals, Greater, GreaterEqual, Less, LesserEqual, Identifier => _, Literal => _}
 

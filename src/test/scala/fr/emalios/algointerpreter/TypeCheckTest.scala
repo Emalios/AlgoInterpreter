@@ -1,10 +1,9 @@
 package fr.emalios.algointerpreter
 
-import fr.emalios.algointerpreter.eval.AlgoTypeCheckingError
 import fr.emalios.algointerpreter.lexer.AlgoLexer
 import fr.emalios.algointerpreter.parser._
 import fr.emalios.algointerpreter.token.{And, Equals, Greater, GreaterEqual, Less, LesserEqual, Minus, Mod, Mul, Not, Or, Percent, Plus, Slash}
-import fr.emalios.algointerpreter.typecheck.ASTTypeChecker
+import fr.emalios.algointerpreter.typecheck.{ASTTypeChecker, AlgoTypeCheckingError}
 import fr.emalios.algointerpreter.typecheck.algow.{BooleanType, FunctionType, IntegerType, StringType}
 import org.scalatest.FunSuite
 

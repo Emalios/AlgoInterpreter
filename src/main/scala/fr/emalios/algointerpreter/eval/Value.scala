@@ -1,6 +1,7 @@
 package fr.emalios.algointerpreter.eval
 
 import fr.emalios.algointerpreter.parser.{Block, FunctionDeclaration}
+import fr.emalios.algointerpreter.typecheck.algow.Type
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
@@ -159,7 +160,7 @@ case class CharValue(value: Char) extends Value {
 }
 
 //TODO: replace by Option[Value] to avoid null return
-case class PrimFunction(fun: Seq[Value] => Value) extends Value {
+case class PrimFunction(fun: (Seq[Value], Option[Type]) => Value) extends Value {
   override def showType(): String = "prim function"
 }
 
