@@ -2,12 +2,35 @@ package fr.emalios.algointerpreter.parser
 
 import fr.emalios.algointerpreter.eval.Quantifier
 import fr.emalios.algointerpreter.token.{Operator, Token, UnaryOperator}
-import fr.emalios.algointerpreter.typecheck.algow.{FunctionType, Type}
+import fr.emalios.algointerpreter.typecheck.algow.{FunctionType, IntegerType, Type}
 
 sealed trait AlgoAST
-sealed trait Expression extends AlgoAST
+sealed trait Expression extends AlgoAST {
+  var typeOf: Option[Type] = Option.empty
+
+  override def toString: String = this match {
+    case literal: Literal => literal match {
+      case sLit@StringLiteral(value) => s"(${sLit.typeOf} $value)"
+      case num@Number(value) => s"(${num.typeOf} $value)"
+      case bool@BooleanLiteral(value) => s"(${bool.typeOf} $value)"
+    }
+    case binOp@BinaryOperation(leftExpression, operator, rightExpression) => s"(${binOp.typeOf} BinaryOperation((${leftExpression.typeOf} $leftExpression) $operator (${rightExpression.typeOf} $rightExpression)))"
+    case unOp@UnaryOperation(operator, right) => s"(${unOp.typeOf} UnaryOperation($operator (${right.typeOf} $right)))"
+    case id@Identifier(value) => s"${id.value}"
+    case FunctionCall(functionName, args) => s"${functionName.value}"
+  }
+}
 sealed trait Literal extends Expression
-sealed trait Instruction extends AlgoAST
+sealed trait Instruction extends AlgoAST {
+  override def toString: String = this match {
+    case IfThenElseInstruction(condition, thenBlock, elseBlock) => ""
+    case Assignment(identifier, expression) => s"Assignment((${identifier.typeOf} $identifier) <- ($expression))"
+    case Return(expression) => s"Return(${expression.typeOf} $expression)"
+    case ForInstruction(identifier, expressionFrom, expressionTo, block) => ""
+    case WhileInstruction(condition, block) => ""
+    case ExprInstr(e) => ""
+  }
+}
 
 case class Program(mainAlgo: Algo, declaredFunction: List[Function]) extends AlgoAST
 case class Algo(block: Block) extends AlgoAST
