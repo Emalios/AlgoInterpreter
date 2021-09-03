@@ -7,7 +7,7 @@
 + [ ] **Types**
   + [X] Entier
   + [X] Booléen
-  + [ ] Chaîne
+  + [X] Chaîne
   + [ ] Flottants
   + [ ] Tableaux
   

@@ -4,7 +4,7 @@ Fin
 
 fonction factorielle(x: entier): entier
 Debut
-    si x = 1 alors
+    si x = 0 alors
         retourne 1
     sinon
         retourne x * factorielle(x-1)
