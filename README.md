@@ -1,31 +1,29 @@
 # AlgoInterpreter
 
-AlgoInterpreter is an interpreter for a programming language in French (for the moment without a name) which aims to use the syntax and the conventions of the algorithmic of the French academy.
+'AlgoInterpreter' est un interpréteur pour un langage de programmation recopiant strictement sa syntaxe des conventions de l'IUT Nancy-Charlemagne afin de pouvoir permettre aux étudiants d'exécuter ce type de code vu abstraitement en cours.
 
-It will also have a complete and precise graphical debugger.
+## Fonctionalitées actuelles et prévues:
 
-## Current and planned features:
++ [ ] **Types**
+  + [X] Entier
+  + [X] Booléen
+  + [ ] Chaîne
+  + [ ] Flottants
+  + [ ] Tableaux
+  
 
-+ [X] Simple calculations without operating priorities
-  + [X] Operating priority system
-  + [X] Complex calculations
-    
-
-+ [X] Debugger in console
-  + [ ] Graphic debugger
-+ [ ] Great error messages
-    
-
-+ [X] Variables
-  + [ ] Type inference system
++ [X] **Instructions**
+  + [X] Si ... alors ... sinon
+  + [X] Affectation
+  + [X] Pour x de ... a ... faire ...
+  + [X] Tant que x faire ...
 
 
-+ [ ] Loops
-    + [ ] For
-    + [ ] While
- 
++ [ ] **Fonctions intégrées**
+    + [X] lire()
+    + [X] ecrire()
+    + [ ] Fonctions sur les chaînes
+    + [ ] Fonctions sur les tableaux
 
-+ [X] Builtin functions
-    + [X] Read/Write 
-    + [ ] String functions
-+ [ ] Support for custom functions  
+
++ [ ] Meilleurs messages d'erreurs
