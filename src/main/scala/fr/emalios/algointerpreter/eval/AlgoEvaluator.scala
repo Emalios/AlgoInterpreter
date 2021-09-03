@@ -196,8 +196,8 @@ class AlgoEvaluator() {
         val (rightResult, _) = this.evalExpression(rightExpression)
         val right = this.checkValueNotEmpty(rightResult, "Trying to unwrap no value")
         operator match {
-          case Minus  => (Some(right.unary_-()), false)
-          case Not    => (Some(right.unary_!()), false)
+          case Minus  => (Some((-right)()), false)
+          case Not    => (Some((!right)()), false)
       }
       case bin@BinaryOperation(leftExpression, operator, rightExpression) =>
         val (leftResult, _) = this.evalExpression(leftExpression)
