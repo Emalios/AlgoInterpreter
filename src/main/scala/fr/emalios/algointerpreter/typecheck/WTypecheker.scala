@@ -5,6 +5,7 @@ import fr.emalios.algointerpreter.eval.{In, InOut}
 import fr.emalios.algointerpreter.parser
 import fr.emalios.algointerpreter.parser.{AlgoAST, Assignment, BinaryOperation, Block, BooleanLiteral, ExprInstr, Expression, ForInstruction, FunctionCall, Identifier, IfThenElseInstruction, Literal, Program, Return, ReturnType, StringLiteral, TypeParameter, TypedExpression, UnaryOperation, WhileInstruction}
 import fr.emalios.algointerpreter.token.{And, Equals, Greater, GreaterEqual, Less, LesserEqual, Minus, Mod, Mul, Not, NotEquals, Or, Percent, Plus, Slash, UnaryOperator}
+import fr.emalios.algointerpreter.typecheck.ReturnMarker.{NO_RETURN, RETURN, ReturnMarker}
 import fr.emalios.algointerpreter.typecheck.algow.{AnyType, BooleanType, CharType, FunctionType, IntegerType, RealType, StringType, TVar, Type, Undefined, UnitType}
 
 import scala.collection.mutable
@@ -230,12 +231,13 @@ class WTypecheker {
     (subst, this.apply(typeOf)(subst))
   }
 
-  def typeInference(block: Block, expectedType: Type): Unit = {
+  def typeInference(block: Block, expectedType: Type): ReturnMarker = {
     /*
     Si le type de retour du block attendu existe (c'est-à-dire si le type n'est pas 'UnitType') alors le block doit contenir au moins une instruction 'Return'.
     Ainsi, pour gérer cela, je crée une variable booléenne qui vaudra vrai si une instruction 'Return' a été typecheck, sinon false et à la fin du tc du block
     si le type attendu n'est pas 'UnitType' et que cette la valeur de cette variable est à false, alors il y a une erreur.
      */
+    var returnMarker = ReturnMarker.NO_RETURN
     var blockHasReturn = false
     var newTypeEnv = this.getCurrentTypeEnv
     block.instructions.foreach {
@@ -245,15 +247,16 @@ class WTypecheker {
         val condSubst = this.mgu(typeOf, BooleanType)
         cond.typeOf = Option(BooleanType)
         newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
-        this.typeEnvStack.addOne(newTypeEnv)
-        this.typeInference(thenBlock, UnitType)
+        /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
+        returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(thenBlock, expectedType))
+        println(returnMarker)
         this.popEnv()
         elseBlock match {
           case Some(value) =>
             this.typeEnvStack.addOne(newTypeEnv)
-            this.typeInference(value, UnitType)
+            this.typeInference(value, expectedType)
             this.popEnv()
-          case None =>
+          case None => //do nothing
         }
       case WhileInstruction(cond, block) =>
         val (subst, typeOf) = this.typeInference(newTypeEnv, cond)
@@ -261,9 +264,9 @@ class WTypecheker {
         val condSubst = this.mgu(typeOf, BooleanType)
         cond.typeOf = Option(BooleanType)
         newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
-        this.printTypeEnv(newTypeEnv)
         this.typeEnvStack.addOne(newTypeEnv)
-        this.typeInference(block, UnitType)
+        /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
+        returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(block, expectedType))
         this.popEnv()
       case ForInstruction(id, from, to, block) =>
         val (exprFromSubst, fromType) = this.typeInference(newTypeEnv, from)
@@ -277,9 +280,10 @@ class WTypecheker {
         newTypeEnv = this.apply(newTypeEnv)(this.mgu(toType, IntegerType))
         newTypeEnv = this.apply(newTypeEnv)(fromSubst)
         newTypeEnv = this.apply(newTypeEnv)(toSubst)
-        this.printTypeEnv(newTypeEnv)
         this.typeEnvStack.addOne(newTypeEnv)
-        this.typeInference(block, UnitType)
+        /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
+        val returnInSubBlock = this.typeInference(block, expectedType)
+        returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(block, expectedType))
         this.popEnv()
       case assignment@Assignment(identifier, expression) =>
         val (subst, typeOf) = this.typeInference(newTypeEnv, expression)
@@ -299,6 +303,7 @@ class WTypecheker {
         this.mgu(typeOf, expectedType)
         expression.typeOf = Option(expectedType)
         blockHasReturn = true
+        returnMarker = RETURN
         /*
         Je pense que cette ligne ne sert à rien puisque si l'algorithme n'arrive pas à trouver une substitution pour passer du type de l'expression au type que la fonction doit renvoyé, il va throw une erreur
         Il serait intéressant de réfléchir à une meilleur erreur à afficher dans ce contexte, c'est-à-dire que la fonction ne renvoit pas ce qu'elle doit renvoyer, on pourrait avoir une erreur plus précise pour ce cas particulier
@@ -309,7 +314,7 @@ class WTypecheker {
     //On teste si le block doit renvoyer ou non une valeur
     expectedType match {
       case UnitType =>
-      case _        if !blockHasReturn => throw AlgoTypeCheckingError(s"Erreur: Le block doit renvoyer une valeur de type '${expectedType.showType()}' mais il ne contient aucune instruction 'Return'.")
+      case _        if returnMarker == NO_RETURN => throw AlgoTypeCheckingError(s"Erreur: Le block doit renvoyer une valeur de type '${expectedType.showType()}' mais il ne contient aucune instruction 'Return'.")
       case _ =>
     }
     //On va tester ici, c'est-à-dire quand on finis de typecheck un block s'il reste dans le typeenv associé à ce block une variable dont le type n'a pas été inféré
@@ -318,6 +323,8 @@ class WTypecheker {
       {
         case (id, (_, typeOf)) => if(this.ftv(typeOf).nonEmpty) throw AlgoTypeCheckingError(s"Erreur: Impossible de déduire le type de la variable '$id' (${typeOf.showType()})")
     })
+
+    returnMarker
   }
 
   var funTypeEnv: TypeEnv = mutable.Map("lire"   -> (List.empty[String], FunctionType(Seq(), TVar("l0"))),
@@ -332,7 +339,6 @@ class WTypecheker {
     program.declaredFunction.foreach(function => {
       val fId = function.declaration.functionName
       val fType = function.declaration.functionType
-      println(s"On ajoute la fonction à l'env des fonctions: ${fType.showType()}")
       funTypeEnv += (fId.value -> (List.empty[String], fType))
       //On ajoute les types demandés par la fonction dans l'environnement de type actuel de manière à ce que ces variables soient accessible dans le corps de la fonction
       fType.parametersType.foreach(paramType => {
