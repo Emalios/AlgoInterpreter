@@ -161,7 +161,6 @@ class AlgoParser extends Parsers {
   private def parseFunctionDeclaration: Parser[FunctionDeclaration] = {
     if (devDebugMode) println("try to parse function declaration")
     (Function ~> parseIdentifier <~ LeftParen) ~ opt(parseTypeParameters) ~ (RightParen ~> opt(parseReturnType)) ^^ { case identifier ~ typeParameters ~ returnType =>
-      println(typeParameters)
       val rType = returnType match {
         case Some(value) => value
         case None => UnitType
