@@ -27,18 +27,15 @@ object Main extends AlgoLexer {
 
     /* token generation */
     val tokens = lexer.apply(code)
-    println(s"Tokens: $tokens")
+    //println(s"Tokens: $tokens")
 
     /* ast generation */
     val parser: AlgoParser = new AlgoParser()
     val ast = parser.apply(tokens)
-    println(s"AST: $ast")
-
+    //println(s"AST: $ast")
     /* typecheck */
     val typechecker = new WTypecheker()
     typechecker.typeInference(ast)
-    ast.mainAlgo.block.instructions.foreach(println)
-
     /* runtime */
     val evaluator = new AlgoEvaluator()
     evaluator.evalProgram(ast)
