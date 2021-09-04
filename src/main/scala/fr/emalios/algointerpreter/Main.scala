@@ -1,7 +1,7 @@
 package fr.emalios.algointerpreter
 
 import fr.emalios.algointerpreter.eval.AlgoEvaluator
-import fr.emalios.algointerpreter.lexer.AlgoLexer
+import fr.emalios.algointerpreter.lexer.{AlgoLexer, AlgoLexerError}
 import fr.emalios.algointerpreter.parser._
 import fr.emalios.algointerpreter.token.{Minus, Plus}
 import fr.emalios.algointerpreter.typecheck.WTypecheker
@@ -26,19 +26,24 @@ object Main extends AlgoLexer {
     println(code)
 
     /* token generation */
-    val tokens = lexer.apply(code)
-    //println(s"Tokens: $tokens")
+    try {
+      val tokens = lexer.apply(code)
+      //println(s"Tokens: $tokens")
 
-    /* ast generation */
-    val parser: AlgoParser = new AlgoParser()
-    val ast = parser.apply(tokens)
-    //println(s"AST: $ast")
-    /* typecheck */
-    val typechecker = new WTypecheker()
-    typechecker.typeInference(ast)
-    /* runtime */
-    val evaluator = new AlgoEvaluator()
-    evaluator.evalProgram(ast)
+      /* ast generation */
+      val parser: AlgoParser = new AlgoParser()
+      val ast = parser.apply(tokens)
+      //println(s"AST: $ast")
+      /* typecheck */
+      val typechecker = new WTypecheker()
+      typechecker.typeInference(ast)
+      /* runtime */
+      val evaluator = new AlgoEvaluator()
+      evaluator.evalProgram(ast)
+    } catch {
+      case e: AlgoLexerError => System.err.println(e)
+    }
+
   }
 
 }

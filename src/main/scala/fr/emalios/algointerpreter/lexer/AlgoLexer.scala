@@ -6,6 +6,7 @@ import fr.emalios.algointerpreter.token.EndOfLine
 import fr.emalios.algointerpreter.token._
 
 import scala.collection.immutable
+import scala.language.postfixOps
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.RegexParsers
 
@@ -32,8 +33,8 @@ class AlgoLexer extends RegexParsers {
    * @return parser which associates a value which is matched by the regex with a Token which wraps this value.
    */
   def stringLit: Parser[StringToken] = {
-    """"[^"]*"""".r ^^ { str => val content = str.substring(1, str.length - 1)
-      token.StringToken(content) }
+    //println("string lit")
+    (""""[^"]*"""".r ^^ { str => val content = str.substring(1, str.length - 1); token.StringToken(content) }).withFailureMessage(s"chaîne attendu")
   }
 
   /**
@@ -44,9 +45,8 @@ class AlgoLexer extends RegexParsers {
    * @return parser which associates a value which is matched by the regex with a Token which wraps this value.
    */
   def numberLit: Parser[IntegerToken] = {
-    "[0-9]+".r ^^ { str =>
-      IntegerToken(Integer.parseInt(str))
-    }
+    //println("number lit")
+    ("[0-9]+".r ^^ { str => IntegerToken(Integer.parseInt(str))}).withFailureMessage("Nombre entier attendu")
   }
 
   val keywords: immutable.HashMap[String, Token] = immutable.HashMap(
@@ -85,19 +85,20 @@ class AlgoLexer extends RegexParsers {
    * @return parser which associates a value which is matched by the regex with a Token which wraps this value.
    */
   def identifierOrKeyword: Parser[Token] = {
-    "[a-zA-Z_][a-zA-Z0-9_]*".r ^^ { str =>
-      if (keywords.contains(str)) keywords(str) else Identifier(str)
-    }
+    //println("identifier or keyword")
+    ("[a-zA-Z_][a-zA-Z0-9_]*".r ^^ { str => if (keywords.contains(str)) keywords(str) else Identifier(str)}).withFailureMessage("Identifieur ou mot clé attendu")
   }
 
   /**
    * @return parser which associates a end of line character matched by the regex with the EndOfLine token.
    */
   def parseEndOfLine: Parser[Token] = {
-    "\r?\n".r ^^^ EndOfLine
+    //println("end of line")
+    "\r?\n".r ^^^ {EndOfLine}
   }
 
   def operator: Parser[Token] = {
+    //println("operator")
     (
       "<-" ^^^ Affectation
         | "mod" ^^^ Mod
@@ -115,7 +116,7 @@ class AlgoLexer extends RegexParsers {
         | "et" ^^^ And
         | "ou" ^^^ Or
         | "," ^^^ Comma
-        | "(" ^^^ LeftParen
+        | "(" ^^^ {LeftParen}
         | ")" ^^^ RightParen
         | "!=" ^^^ NotEquals
         | "!" ^^^ Not
@@ -127,12 +128,12 @@ class AlgoLexer extends RegexParsers {
    * @return a set of tokens
    */
   def tokens: Parser[List[Token]] = {
-    phrase(rep1(operator | identifierOrKeyword | parseEndOfLine | stringLit | numberLit))
+    phrase(rep1(operator | identifierOrKeyword | parseEndOfLine | stringLit | numberLit)).withFailureMessage("Erreur de syntaxe")
   }
 
   def apply(code: String): List[Token] = {
     parse(tokens, code) match {
-      case NoSuccess(msg, _) => throw AlgoLexerError(msg)
+      case NoSuccess(msg, reste) => throw AlgoLexerError(msg, reste)
       case Success(result, _) => result
     }
   }
