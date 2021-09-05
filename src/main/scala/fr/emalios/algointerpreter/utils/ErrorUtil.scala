@@ -9,15 +9,16 @@ object ErrorUtil {
 
 
   def makeError(msg: String, reste: Reader[Any]): String = {
+    var builder: StringBuilder = new StringBuilder
     //TODO: Remove hardcode for "input.txt"
     if (reste.pos.line == 0) return msg
-    var firstLine = s"input.txt:${reste.pos.line}: $msg\n"
+    builder = builder.addAll(s"input.txt:${reste.pos.line}: $msg\n")
     val lines = reste.source.toString.split("\r?\n")
     val errorLine = lines(reste.pos.line-1)
-    firstLine += s"  ${reste.pos.line}  $errorLine\n"
+    builder = builder.addAll(s"  ${reste.pos.line}  $errorLine\n")
     val pos = 4 + (reste.pos.column - 1) + reste.pos.line
-    firstLine += " ".repeat(pos-1) + "^" + "\n"
-    firstLine
+    builder = builder.addAll(" ".repeat(pos-1) + "^" + "\n")
+    builder.toString()
   }
 
 }
