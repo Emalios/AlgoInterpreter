@@ -17,7 +17,8 @@ object ErrorUtil {
     val errorLine = lines(reste.pos.line-1)
     builder = builder.addAll(s"  ${reste.pos.line}  $errorLine\n")
     val pos = 4 + (reste.pos.column - 1) + reste.pos.line
-    builder = builder.addAll(" ".repeat(pos-1) + "^" + "\n")
+    val truc: String = " " * (pos-1) + "^" + "\n"
+    builder = builder.addAll(truc)
     builder.toString()
   }
 
