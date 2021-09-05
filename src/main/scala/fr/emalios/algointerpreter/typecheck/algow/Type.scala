@@ -17,18 +17,23 @@ sealed trait Type {
 }
 
 case object IntegerType extends Type {
+  override def toString: String = "entier"
   override def showType(): String = "entier"
 }
 case object BooleanType extends Type {
+  override def toString: String = "booleen"
   override def showType(): String = "booléen"
 }
 case object RealType extends Type {
+  override def toString: String = "reel"
   override def showType(): String = "réel"
 }
 case object StringType extends Type {
+  override def toString: String = "chaine"
   override def showType(): String = "chaîne"
 }
 case object CharType extends Type {
+  override def toString: String = "char"
   override def showType(): String = "charactère"
 }
 case class AnyType() extends Type {

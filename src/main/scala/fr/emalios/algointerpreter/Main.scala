@@ -32,8 +32,8 @@ object Main extends AlgoLexer {
 
       /* ast generation */
       val parser: AlgoParser = new AlgoParser()
-      val ast = parser.apply(tokens)
-      //println(s"AST: $ast")
+      val ast: Program = parser.apply(tokens)
+      //println(s"AST: ${ast}")
       /* typecheck */
       val typechecker = new WTypecheker()
       typechecker.typeInference(ast)
@@ -41,7 +41,7 @@ object Main extends AlgoLexer {
       val evaluator = new AlgoEvaluator()
       evaluator.evalProgram(ast)
     } catch {
-      case e: AlgoLexerError => System.err.println(e)
+      case e@_ => System.err.println(e)
     }
 
   }

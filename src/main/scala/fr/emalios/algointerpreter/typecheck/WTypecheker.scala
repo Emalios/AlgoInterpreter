@@ -249,7 +249,6 @@ class WTypecheker {
         newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
         /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
         returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(thenBlock, expectedType))
-        println(returnMarker)
         this.popEnv()
         elseBlock match {
           case Some(value) =>

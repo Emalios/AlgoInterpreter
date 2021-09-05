@@ -23,16 +23,18 @@ sealed trait Expression extends AlgoAST {
 sealed trait Literal extends Expression
 sealed trait Instruction extends AlgoAST {
   override def toString: String = this match {
-    case IfThenElseInstruction(condition, thenBlock, elseBlock) => ""
+    case IfThenElseInstruction(condition, thenBlock, elseBlock) => s"IfThenElse($condition $thenBlock $elseBlock)"
     case Assignment(identifier, expression) => s"Assignment((${identifier.typeOf} $identifier) <- ($expression))"
     case Return(expression) => s"Return(${expression.typeOf} $expression)"
     case ForInstruction(identifier, expressionFrom, expressionTo, block) => ""
     case WhileInstruction(condition, block) => ""
-    case ExprInstr(e) => ""
+    case ExprInstr(e) => s"${e}"
   }
 }
 
-case class Program(mainAlgo: Algo, declaredFunction: List[Function]) extends AlgoAST
+case class Program(mainAlgo: Algo, declaredFunction: List[Function]) extends AlgoAST {
+  override def toString: String = s"$mainAlgo\n $declaredFunction"
+}
 case class Algo(block: Block) extends AlgoAST
 case class IfThenElseInstruction(condition: Expression, thenBlock: Block, elseBlock: Option[Block]) extends Instruction
 case class Block(instructions: List[Instruction]) extends AlgoAST
@@ -49,7 +51,9 @@ case class TypedExpression(returnType: Type, expression: Expression) extends Exp
 case class StringLiteral(value: String) extends Literal
 case class Number(value: Int) extends Literal
 case class BooleanLiteral(value: Boolean) extends Literal
-case class Identifier(value: String) extends Expression
+case class Identifier(value: String) extends Expression {
+  override def toString: String = value
+}
 case class Function(declaration: FunctionDeclaration, algo: Algo) extends AlgoAST
 case class ReturnType(returnType: Type) extends AlgoAST
 case class TypeParameter(name: Identifier, paramType: Type, quantifier: Quantifier) extends AlgoAST

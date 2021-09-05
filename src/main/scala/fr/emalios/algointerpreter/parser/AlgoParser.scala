@@ -8,6 +8,7 @@ import fr.emalios.algointerpreter.typecheck.algow.{BooleanType, CharType, Functi
 
 import scala.language.postfixOps
 import scala.util.parsing.combinator.Parsers
+import scala.util.parsing.input.Reader
 
 class AlgoParser extends Parsers {
 
@@ -30,7 +31,7 @@ class AlgoParser extends Parsers {
 
   private def parseLiteral: Parser[Expression] = {
     if (devDebugMode) println("try to parse literal")
-    parseString | parseInteger | parseBoolean
+    parseString ||| parseInteger ||| parseBoolean
   }
 
   private def parseIdentifier: Parser[parser.Identifier] = {
@@ -40,7 +41,7 @@ class AlgoParser extends Parsers {
 
   private def parseUnary: Parser[Expression] = {
     if (devDebugMode) println("try to parse unary")
-    ( (Not | Minus) ~ parseExpression) ^^ { case operator ~ expression => operator match {
+    ( (Not ||| Minus) ~ parseExpression) ^^ { case operator ~ expression => operator match {
       case operator: Operator => operator match {
         case operator: UnaryOperator => UnaryOperation(operator, expression)
       }
@@ -49,11 +50,11 @@ class AlgoParser extends Parsers {
 
   private def parseBinary: Parser[Expression] = {
     if (devDebugMode) println("try to parse binary")
-    chainl1(chainl1(chainl1(parseGrouping | parseUnary | parseLiteral | parseFunctionCall | parseIdentifier, parseMultiplication | parseDivision | parseMod | parseEuclideanDivision | parseBooleanExpr), parseAddition | parseSubtraction), parseInequality | parseEquality)
+    chainl1(chainl1(chainl1(parseGrouping ||| parseUnary ||| parseLiteral ||| parseFunctionCall ||| parseIdentifier, parseMultiplication ||| parseDivision ||| parseMod ||| parseEuclideanDivision ||| parseBooleanExpr), parseAddition ||| parseSubtraction), parseInequality ||| parseEquality)
   }
 
   private def parseBooleanExpr: BinOpParser = {
-    parseAnd | parseOr | parseLesserEquals | parseLesser | parseGreaterEquals | parseGreater
+    parseAnd ||| parseOr ||| parseLesserEquals ||| parseLesser ||| parseGreaterEquals ||| parseGreater
   }
 
   /**
@@ -103,7 +104,7 @@ class AlgoParser extends Parsers {
 
   private def parseExpression: Parser[Expression] = {
     if (devDebugMode) println("try to parse expression")
-    parseGrouping | parseBinary | parseUnary | parseFunctionCall | parseLiteral
+    parseGrouping ||| parseBinary ||| parseUnary ||| parseFunctionCall ||| parseLiteral
   }
 
   private def parseExprFunctionCall: Parser[ExprInstr] = {
@@ -118,27 +119,26 @@ class AlgoParser extends Parsers {
 
   private def parseArgs: Parser[List[Expression]] = {
     if (devDebugMode) println("try to parse args")
-    LeftParen ~> repsep(parseExpression, Comma) <~ RightParen
+    LeftParen ~>! repsep(parseExpression, Comma) <~! RightParen
   }
 
   private def parseBlock(startDelimiter: Parser[Token], endDelimiter: Parser[Token]): Parser[Block] = {
-    if (devDebugMode) println("try to parse block")
-    startDelimiter ~> rep1(parseInstruction) <~ endDelimiter ^^ Block
+    (startDelimiter ~>! (parseInstruction*) <~! endDelimiter) ^^ Block
   }
 
   private def parseAffectation: Parser[parser.Assignment] = {
     if (devDebugMode) println("try to parse affectation")
-    ( parseIdentifier ~ Affectation ~ parseExpression ) ^^ { case identifier ~ _ ~ expression => parser.Assignment(identifier, expression)}
+    ( parseIdentifier ~ Affectation ~! parseExpression ) ^^ { case identifier ~ _ ~ expression => parser.Assignment(identifier, expression)}
   }
 
   private def parseReturn: Parser[parser.Return] = {
     if (devDebugMode) println("try to parse return")
-    ( Return ~> parseExpression ) ^^ parser.Return
+    (Return ~>! parseExpression) ^^ parser.Return
   }
 
   private def parseInstruction: Parser[Instruction] = {
     if (devDebugMode) println("try to parse instruction")
-    (parseIfThenElseInstruction | parseForInstruction | parseWhileInstruction | parseReturn | parseExprFunctionCall | parseAffectation) <~ parseEndOfLine
+    (parseIfThenElseInstruction ||| parseForInstruction ||| parseWhileInstruction ||| parseReturn ||| parseExprFunctionCall ||| parseAffectation) <~! parseEndOfLine
   }
 
   private def parseForInstruction: Parser[ForInstruction] = {
@@ -150,17 +150,17 @@ class AlgoParser extends Parsers {
   }
 
   private def parseIfThenElseInstruction: Parser[IfThenElseInstruction] = {
-    (If ~> parseExpression <~ (Then ~ parseEndOfLine)) ~ (parseInstruction*) ~ (opt((Else ~ opt(parseEndOfLine)) ~> parseInstruction*) <~ EndIf) ^^ { case expression ~ thenBlock ~ elseBlock => IfThenElseInstruction(expression, Block(thenBlock), Option(Block(elseBlock.get))) }
+    (If ~>! parseExpression <~! (Then ~! parseEndOfLine)) ~! (parseInstruction*) ~! (opt((Else ~! parseEndOfLine) ~>! parseInstruction*) <~! EndIf) ^^ { case expression ~ thenBlock ~ elseBlock => IfThenElseInstruction(expression, Block(thenBlock), Option(Block(elseBlock.get))) }
   }
 
   private def parseFunction: Parser[parser.Function] = {
     if (devDebugMode) println("try to parse function")
-    parseFunctionDeclaration ~ parseEndOfLine ~ parseAlgo ^^ { case functionDeclaration ~ _ ~ algo => parser.Function(functionDeclaration, algo) }
+    parseFunctionDeclaration ~! parseEndOfLine ~! parseAlgo ^^ { case functionDeclaration ~ _ ~ algo => parser.Function(functionDeclaration, algo) }
   }
 
   private def parseFunctionDeclaration: Parser[FunctionDeclaration] = {
     if (devDebugMode) println("try to parse function declaration")
-    (Function ~> parseIdentifier <~ LeftParen) ~ opt(parseTypeParameters) ~ (RightParen ~> opt(parseReturnType)) ^^ { case identifier ~ typeParameters ~ returnType =>
+    (Function ~>! parseIdentifier <~! LeftParen) ~ opt(parseTypeParameters) ~ (RightParen ~>! opt(parseReturnType)) ^^ { case identifier ~ typeParameters ~ returnType =>
       val rType = returnType match {
         case Some(value) => value
         case None => UnitType
@@ -184,24 +184,24 @@ class AlgoParser extends Parsers {
 
   private def parseTypeParameter: Parser[TypeParameter] = {
     if (devDebugMode) println("try to parse type parameter")
-    (parseIdentifier ~ opt(parseQuantifier) ~ DoublePoints ~ parseType) ^^ { case identifier ~ quantifier ~ _ ~ paramType => quantifier match {
+    (parseIdentifier ~! opt(parseQuantifier) ~! DoublePoints ~! parseType) ^^ { case identifier ~ quantifier ~ _ ~ paramType => quantifier match {
       case Some(_) => TypeParameter(identifier, paramType, quantifier.get)
       case None => TypeParameter(identifier, paramType, fr.emalios.algointerpreter.eval.In)
     } }
   }
 
   private def parseQuantifier: Parser[Quantifier] = {
-    InOut ^^^ fr.emalios.algointerpreter.eval.InOut |
-    In ^^^ fr.emalios.algointerpreter.eval.In       |
+    InOut ^^^ fr.emalios.algointerpreter.eval.InOut |||
+    In ^^^ fr.emalios.algointerpreter.eval.In       |||
     Out ^^^ fr.emalios.algointerpreter.eval.Out
   }
 
   private def parseType: Parser[Type] = {
     if (devDebugMode) println("try to parse type")
-        CharTypeToken ^^^ CharType       |
-        BooleanTypeToken ^^^ BooleanType |
-        IntegerTypeToken ^^^ IntegerType |
-        StringTypeToken ^^^ StringType   |
+        CharTypeToken ^^^ CharType       |||
+        BooleanTypeToken ^^^ BooleanType |||
+        IntegerTypeToken ^^^ IntegerType |||
+        StringTypeToken ^^^ StringType   |||
         RealTypeToken ^^^ RealType
   }
 
@@ -229,7 +229,7 @@ class AlgoParser extends Parsers {
    */
   def apply(tokens: Seq[Token]): Program = {
     this.parseProgram.apply(reader(tokens)) match {
-      case NoSuccess(msg, _) => throw AlgoParsingError(msg)
+      case NoSuccess(msg, reste: Reader[Token]) => throw AlgoParsingError(msg, reste)
       case Success(result, _) => result
     }
   }
@@ -241,7 +241,7 @@ class AlgoParser extends Parsers {
    */
   def applyInput(tokens: Seq[Token]): Expression = {
     this.parseExpression.apply(reader(tokens)) match {
-      case NoSuccess(msg, _) => throw AlgoParsingError(msg)
+      case NoSuccess(msg, reste) => throw AlgoParsingError(msg, reste)
       case Success(result, _) => result
     }
   }
