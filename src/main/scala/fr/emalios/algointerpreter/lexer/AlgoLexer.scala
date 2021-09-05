@@ -50,29 +50,29 @@ class AlgoLexer extends RegexParsers {
   }
 
   val keywords: immutable.HashMap[String, Token] = immutable.HashMap(
-    "entier" -> IntegerTypeToken,
-    "booleen" -> BooleanTypeToken,
-    "reel" -> RealTypeToken,
-    "chaine" -> StringTypeToken,
-    "char" -> CharTypeToken,
-    "In" -> In,
-    "Out" -> Out,
-    "InOut" -> InOut,
-    "Fin" -> End,
-    "Debut" -> Start,
-    "si" -> If,
-    "fsi" -> EndIf,
-    "pour" -> For,
-    "de" -> From,
-    "a" -> To,
-    "fpour" -> EndFor,
-    "tantque" -> While,
-    "ftant" -> EndWhile,
-    "alors" -> Then,
-    "sinon" -> Else,
-    "faire" -> Do,
-    "fonction" -> Function,
-    "retourne" -> Return,
+    IntegerTypeToken.toString -> IntegerTypeToken,
+    BooleanTypeToken.toString -> BooleanTypeToken,
+    RealTypeToken.toString -> RealTypeToken,
+    StringTypeToken.toString -> StringTypeToken,
+    CharTypeToken.toString -> CharTypeToken,
+    In.toString -> In,
+    Out.toString -> Out,
+    InOut.toString -> InOut,
+    End.toString -> End,
+    Start.toString -> Start,
+    If.toString -> If,
+    EndIf.toString -> EndIf,
+    For.toString -> For,
+    From.toString -> From,
+    To.toString -> To,
+    EndFor.toString -> EndFor,
+    While.toString -> While,
+    EndWhile.toString -> EndWhile,
+    Then.toString -> Then,
+    Else.toString -> Else,
+    Do.toString -> Do,
+    Function.toString -> Function,
+    Return.toString -> Return,
     "vrai" -> BooleanToken(true),
     "faux" -> BooleanToken(false)
   )
@@ -133,7 +133,7 @@ class AlgoLexer extends RegexParsers {
 
   def apply(code: String): List[Token] = {
     parse(tokens, code) match {
-      case NoSuccess(msg, reste) => throw AlgoLexerError(msg, reste)
+      case NoSuccess(msg, reste: Input) => throw AlgoLexerError(msg, reste)
       case Success(result, _) => result
     }
   }
