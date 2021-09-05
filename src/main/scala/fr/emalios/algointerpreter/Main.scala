@@ -41,7 +41,7 @@ object Main extends AlgoLexer {
       val evaluator = new AlgoEvaluator()
       evaluator.evalProgram(ast)
     } catch {
-      case e@_ => System.err.println(e)
+      case e: Throwable => System.err.println(e)
     }
 
   }
