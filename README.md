@@ -61,4 +61,4 @@ Je vous conseille d'utiliser un environnement linux, wsl suffit si vous êtes so
 
   ## Important
 
-  Pour l'instant l'interpréteur ne s'occupe que de lire le code contenue dans un fichier nommé '**input.txt**', ainsi vous devrez créer ce fichier et écrire votre code à l'intérieur. Il est néanmoins prévu de changer ce système pour quelque chose de plus abstrait. 
+  Pour l'instant l'interpréteur ne s'occupe que de lire le code contenue dans un fichier nommé '**input.txt**' à la racine du projet, donc dans le dossier AlgoInterpreter, ainsi vous devrez créer ce fichier et écrire votre code à l'intérieur. Il est néanmoins prévu de changer ce système pour quelque chose de plus abstrait. 
