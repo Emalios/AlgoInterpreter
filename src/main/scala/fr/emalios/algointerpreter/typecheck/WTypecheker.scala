@@ -203,10 +203,10 @@ class WTypecheker {
           }
         }
       case FunctionCall(functionName, args) =>
-        val tVar = this.newTVar('t')
         funTypeEnv.get(functionName.value) match {
           case Some((_, typeOf)) => typeOf match {
-            case funType@FunctionType(parametersType, returnType) =>
+            case FunctionType(parametersType, returnType) =>
+              //debug
               //On s'assure en premier qu'on a donné assez d'arguments et qu'on n'en donne pas trop.
               if(parametersType.size != args.size) throw AlgoTypeCheckingError(s"Erreur: Nombre d'arguments incorrect pour la fonction '${functionName.value}', elle en demande ${parametersType.size} mais en reçoit ${args.size}")
               //Ensuite on s'assure que les types des arguments données correspondent bien à ce qu'attends la fonction
@@ -307,8 +307,9 @@ class WTypecheker {
         Je pense que cette ligne ne sert à rien puisque si l'algorithme n'arrive pas à trouver une substitution pour passer du type de l'expression au type que la fonction doit renvoyé, il va throw une erreur
         Il serait intéressant de réfléchir à une meilleur erreur à afficher dans ce contexte, c'est-à-dire que la fonction ne renvoit pas ce qu'elle doit renvoyer, on pourrait avoir une erreur plus précise pour ce cas particulier
         */
-        //if(this.apply(typeOf)(subst) != expectedType) throw AlgoTypeCheckingError(s"Erreur: La fonction doit retourner une variable de type '${expectedType.showType()}' mais elle renvoie un type '${typeOf.showType()}'")
       case ExprInstr(e) =>
+        val (subst, _) = this.ti(newTypeEnv, e)
+        newTypeEnv = this.apply(newTypeEnv)(subst)
     }
     //On teste si le block doit renvoyer ou non une valeur
     expectedType match {
@@ -318,7 +319,7 @@ class WTypecheker {
     }
     //On va tester ici, c'est-à-dire quand on finis de typecheck un block s'il reste dans le typeenv associé à ce block une variable dont le type n'a pas été inféré
     //s'il en reste une alors sa déclaration est ambigüe et on le signale à l'utilisateur vià une erreur.
-    this.getCurrentTypeEnv.foreach(
+    newTypeEnv.foreach(
       {
         case (id, (_, typeOf)) => if(this.ftv(typeOf).nonEmpty) throw AlgoTypeCheckingError(s"Erreur: Impossible de déduire le type de la variable '$id' (${typeOf.showType()})")
     })
@@ -352,13 +353,14 @@ class WTypecheker {
     if(this.typeEnvStack.size == 1) return
     val actual: TypeEnv = this.getCurrentTypeEnv
     val parent = this.typeEnvStack(this.typeEnvStack.size-2)
-    for((id, subst) <- actual)
+    for((id, subst) <- actual) {
       if(parent.contains(id)) {
         val parentScheme = parent(id)
         val newSubst: Subst = this.mgu(subst._2, parentScheme._2)
         parent.remove(id)
         parent.addOne(id, this.apply(parentScheme)(newSubst))
       }
+    }
   }
 
 }
