@@ -4,7 +4,7 @@ import fr.emalios.algointerpreter.Main.devDebugMode
 import fr.emalios.algointerpreter.lexer.AlgoLexer
 import fr.emalios.algointerpreter.parser._
 import fr.emalios.algointerpreter.parser.{Assignment, BinaryOperation, Block, BooleanLiteral, ExprInstr, Expression, FunctionCall, Identifier, Instruction, Literal, Number, StringLiteral, UnaryOperation}
-import fr.emalios.algointerpreter.token.{And, Equals, Greater, GreaterEqual, Less, LesserEqual, Minus, Mul, Not, NotEquals, Or, Plus}
+import fr.emalios.algointerpreter.token.{And, Equals, Greater, GreaterEqual, Less, LesserEqual, Minus, Mod, Mul, Not, NotEquals, Or, Percent, Plus}
 import fr.emalios.algointerpreter.typecheck.WTypecheker
 import fr.emalios.algointerpreter.typecheck.algow.{BooleanType, CharType, FunctionType, IntegerType, StringType, Type}
 
@@ -162,7 +162,10 @@ class AlgoEvaluator() {
     val values = functionCall.args
     if (!this.getCurrentFrame.contains(functionName)) throw AlgoEvaluationError("Erreur: La fonction '" + functionName + "' n'existe pas.")
     this.getCurrentFrame(functionName) match {
-      case (PrimFunction(function), _) => (Option(function.apply(values.map(this.evalExpression).map(optionalValue => optionalValue._1.get), functionCall.typeOf)), false)
+      case (PrimFunction(function), _) => {
+        val t = (Option(function.apply(values.map(this.evalExpression).map(optionalValue => optionalValue._1.get), functionCall.typeOf)), false)
+        t
+      }
       case (FunctionApplication(declaration, block), _) =>
         val frame: Frame = this.callStack.head.clone()
         for ((typeParameter, value) <- declaration.functionType.parametersType zip values) {
@@ -202,7 +205,7 @@ class AlgoEvaluator() {
       case bin@BinaryOperation(leftExpression, operator, rightExpression) =>
         val (leftResult, _) = this.evalExpression(leftExpression)
         val (rightResult, _) = this.evalExpression(rightExpression)
-        val left = checkValueNotEmpty(leftResult, "Trying to unwrap no value")
+        val left: Value = checkValueNotEmpty(leftResult, "Trying to unwrap no value")
         val right = checkValueNotEmpty(rightResult, "Trying to unwrap no value")
 
         operator match {
@@ -210,6 +213,8 @@ class AlgoEvaluator() {
           case Minus        => (Some(left - right), false)
           case Mul          => (Some(left * right), false)
           case Less       => (Some(left < right), false)
+          case Mod          => (Some(left mod right), false)
+          case Percent      => (Some(left / right), false)
           case LesserEqual  => (Some(left <= right), false)
           case Greater      => (Some(left > right), false)
           case GreaterEqual => (Some(left >= right), false)

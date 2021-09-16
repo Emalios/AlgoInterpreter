@@ -247,6 +247,7 @@ class WTypecheker {
         val condSubst = this.mgu(typeOf, BooleanType)
         cond.typeOf = Option(BooleanType)
         newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
+        this.typeEnvStack.addOne(newTypeEnv)
         /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
         returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(thenBlock, expectedType))
         this.popEnv()

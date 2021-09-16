@@ -13,6 +13,8 @@ abstract class Value {
 
   def ||(that: Value): Value = ???
 
+  def /(that: Value):Value = ???
+
   def &&(that: Value): Value = ???
 
   def !=(that: Value): Value = ???
@@ -33,6 +35,8 @@ abstract class Value {
 
   def ==(that: Value): Value = ???
 
+  def mod(that: Value): Value = ???
+
   def showType(): String
 
 }
@@ -45,6 +49,20 @@ case class IntegerValue(value: AtomicInteger) extends Value {
   override def +(that: Value): Value = {
     that match {
       case IntegerValue(value) => new IntegerValue(this.value.get() + value.get())
+      case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
+    }
+  }
+
+  override def /(that: Value): Value = {
+    that match {
+      case IntegerValue(value) => new IntegerValue(this.value.get() / value.get())
+      case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
+    }
+  }
+
+  override def mod(that: Value): Value = {
+    that match {
+      case IntegerValue(value) => println(this.value.get() % value.get()); new IntegerValue(this.value.get() % value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }

@@ -150,7 +150,7 @@ class AlgoParser extends Parsers {
   }
 
   private def parseIfThenElseInstruction: Parser[IfThenElseInstruction] = {
-    (If ~>! parseExpression <~! (Then ~! parseEndOfLine)) ~! (parseInstruction*) ~! (opt((Else ~! parseEndOfLine) ~>! parseInstruction*) <~! EndIf) ^^ { case expression ~ thenBlock ~ elseBlock => IfThenElseInstruction(expression, Block(thenBlock), Option(Block(elseBlock.get))) }
+    (If ~>! parseExpression <~! (Then ~! parseEndOfLine)) ~! (parseInstruction*) ~! (opt((Else ~! parseEndOfLine) ~>! (parseInstruction*)) <~! EndIf) ^^ { case expression ~ thenBlock ~ elseBlock => IfThenElseInstruction(expression, Block(thenBlock), Option(Block(elseBlock.get))) }
   }
 
   private def parseFunction: Parser[parser.Function] = {

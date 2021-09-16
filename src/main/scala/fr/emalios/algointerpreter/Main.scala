@@ -26,7 +26,7 @@ object Main extends AlgoLexer {
     println(code)
 
     /* token generation */
-    try {
+
       val tokens = lexer.apply(code)
       //println(s"Tokens: $tokens")
 
@@ -40,9 +40,7 @@ object Main extends AlgoLexer {
       /* runtime */
       val evaluator = new AlgoEvaluator()
       evaluator.evalProgram(ast)
-    } catch {
-      case e: Throwable => System.err.println(e)
-    }
+
 
   }
 
