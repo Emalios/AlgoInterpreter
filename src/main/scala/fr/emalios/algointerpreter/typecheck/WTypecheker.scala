@@ -207,6 +207,8 @@ class WTypecheker {
           case Some((_, typeOf)) => typeOf match {
             case FunctionType(parametersType, returnType) =>
               //debug
+              println("fonction")
+              printTypeEnv(typeEnv)
               //On s'assure en premier qu'on a donné assez d'arguments et qu'on n'en donne pas trop.
               if(parametersType.size != args.size) throw AlgoTypeCheckingError(s"Erreur: Nombre d'arguments incorrect pour la fonction '${functionName.value}', elle en demande ${parametersType.size} mais en reçoit ${args.size}")
               //Ensuite on s'assure que les types des arguments données correspondent bien à ce qu'attends la fonction
@@ -239,92 +241,91 @@ class WTypecheker {
      */
     var returnMarker = ReturnMarker.NO_RETURN
     var blockHasReturn = false
-    var newTypeEnv = this.getCurrentTypeEnv
-    block.instructions.foreach {
-      case IfThenElseInstruction(cond, thenBlock, elseBlock) =>
-        val (subst, typeOf) = this.typeInference(newTypeEnv, cond)
-        /* on s'assure que c'est bien une expression booléenne */
-        val condSubst = this.mgu(typeOf, BooleanType)
-        cond.typeOf = Option(BooleanType)
-        newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
-        this.typeEnvStack.addOne(newTypeEnv)
-        /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
-        returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(thenBlock, expectedType))
-        this.popEnv()
-        elseBlock match {
-          case Some(value) =>
-            this.typeEnvStack.addOne(newTypeEnv)
-            this.typeInference(value, expectedType)
-            this.popEnv()
-          case None => //do nothing
-        }
-      case WhileInstruction(cond, block) =>
-        val (subst, typeOf) = this.typeInference(newTypeEnv, cond)
-        /* on s'assure que c'est bien une expression booléenne */
-        val condSubst = this.mgu(typeOf, BooleanType)
-        cond.typeOf = Option(BooleanType)
-        newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
-        this.typeEnvStack.addOne(newTypeEnv)
-        /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
-        returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(block, expectedType))
-        this.popEnv()
-      case ForInstruction(id, from, to, block) =>
-        val (exprFromSubst, fromType) = this.typeInference(newTypeEnv, from)
-        val (exprToSubst, toType)     = this.typeInference(newTypeEnv, to)
-        newTypeEnv.addOne((id.value, (List.empty, IntegerType)))
-        /* on s'assure que c'est bien une expression entière */
-        val fromSubst = this.composeSubst(exprFromSubst, this.mgu(fromType, IntegerType))
-        val toSubst   = this.composeSubst(exprToSubst, this.mgu(toType, IntegerType))
-        from.typeOf = Option(IntegerType)
-        to.typeOf = Option(IntegerType)
-        newTypeEnv = this.apply(newTypeEnv)(this.mgu(toType, IntegerType))
-        newTypeEnv = this.apply(newTypeEnv)(fromSubst)
-        newTypeEnv = this.apply(newTypeEnv)(toSubst)
-        this.typeEnvStack.addOne(newTypeEnv)
-        /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
-        val returnInSubBlock = this.typeInference(block, expectedType)
-        returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(block, expectedType))
-        this.popEnv()
-      case assignment@Assignment(identifier, expression) =>
-        val (subst, typeOf) = this.typeInference(newTypeEnv, expression)
-        identifier.typeOf = Option(typeOf)
-        expression.typeOf = Option(typeOf)
-        newTypeEnv = this.apply(newTypeEnv)(subst)
-        newTypeEnv.addOne(identifier.value -> (List.empty[String], typeOf))
-        this.popEnv()
-        this.typeEnvStack.addOne(newTypeEnv)
-      case Return(expression) =>
-        expectedType match {
-          case UnitType => throw AlgoTypeCheckingError(s"Erreur: Le block renvoit une valeur alors qu'il ne doit pas.")
-          case _ =>
-        }
-        val (_, typeOf) = this.typeInference(newTypeEnv, expression)
-        /* On s'assure que le type de la variable renvoyé est bien le type que la fonction doit retourner */
-        this.mgu(typeOf, expectedType)
-        expression.typeOf = Option(expectedType)
-        blockHasReturn = true
-        returnMarker = RETURN
+    block.instructions.foreach(instruction => {
+      var newTypeEnv = this.getCurrentTypeEnv.clone()
+      instruction match {
+        case IfThenElseInstruction(cond, thenBlock, elseBlock) =>
+          val (subst, typeOf) = this.typeInference(newTypeEnv, cond)
+          /* on s'assure que c'est bien une expression booléenne */
+          val condSubst = this.mgu(typeOf, BooleanType)
+          cond.typeOf = Option(BooleanType)
+          newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
+          this.typeEnvStack.addOne(newTypeEnv)
+          /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
+          returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(thenBlock, expectedType))
+          this.popEnv()
+          elseBlock match {
+            case Some(value) =>
+              this.typeEnvStack.addOne(newTypeEnv)
+              this.typeInference(value, expectedType)
+              this.popEnv()
+            case None => //do nothing
+          }
+        case WhileInstruction(cond, block) =>
+          val (subst, typeOf) = this.typeInference(newTypeEnv, cond)
+          /* on s'assure que c'est bien une expression booléenne */
+          val condSubst = this.mgu(typeOf, BooleanType)
+          cond.typeOf = Option(BooleanType)
+          newTypeEnv = this.apply(newTypeEnv)(this.composeSubst(subst, condSubst))
+          this.typeEnvStack.addOne(newTypeEnv)
+          /* Si le block n'a pas encore d'instruction 'Return' alors on actualise la variable, or, s'il y en a déjà une, pas la peine de réactualiser */
+          returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(block, expectedType))
+          this.popEnv()
+        case ForInstruction(id, from, to, block) =>
+          val (exprFromSubst, fromType) = this.typeInference(newTypeEnv, from)
+          val (exprToSubst, toType) = this.typeInference(newTypeEnv, to)
+          newTypeEnv.addOne((id.value, (List.empty, IntegerType)))
+          /* on s'assure que c'est bien une expression entière */
+          val fromSubst = this.composeSubst(exprFromSubst, this.mgu(fromType, IntegerType))
+          val toSubst = this.composeSubst(exprToSubst, this.mgu(toType, IntegerType))
+          from.typeOf = Option(IntegerType)
+          to.typeOf = Option(IntegerType)
+          newTypeEnv = this.apply(newTypeEnv)(this.mgu(toType, IntegerType))
+          newTypeEnv = this.apply(newTypeEnv)(fromSubst)
+          newTypeEnv = this.apply(newTypeEnv)(toSubst)
+          this.typeEnvStack.addOne(newTypeEnv)
+          returnMarker = ReturnMarker.combineOr(returnMarker, this.typeInference(block, expectedType))
+          this.popEnv()
+        case assignment@Assignment(identifier, expression) =>
+          val (subst, typeOf) = this.typeInference(newTypeEnv, expression)
+          identifier.typeOf = Option(typeOf)
+          expression.typeOf = Option(typeOf)
+          newTypeEnv = this.apply(newTypeEnv)(subst)
+          newTypeEnv.addOne(identifier.value -> (List.empty[String], typeOf))
+          this.popEnv()
+          this.typeEnvStack.addOne(newTypeEnv)
+        case Return(expression) =>
+          expectedType match {
+            case UnitType => throw AlgoTypeCheckingError(s"Erreur: Le block renvoit une valeur alors qu'il ne doit pas.")
+            case _ =>
+          }
+          val (_, typeOf) = this.typeInference(newTypeEnv, expression)
+          /* On s'assure que le type de la variable renvoyé est bien le type que la fonction doit retourner */
+          this.mgu(typeOf, expectedType)
+          expression.typeOf = Option(expectedType)
+          blockHasReturn = true
+          returnMarker = RETURN
         /*
         Je pense que cette ligne ne sert à rien puisque si l'algorithme n'arrive pas à trouver une substitution pour passer du type de l'expression au type que la fonction doit renvoyé, il va throw une erreur
         Il serait intéressant de réfléchir à une meilleur erreur à afficher dans ce contexte, c'est-à-dire que la fonction ne renvoit pas ce qu'elle doit renvoyer, on pourrait avoir une erreur plus précise pour ce cas particulier
         */
-      case ExprInstr(e) =>
-        val (subst, _) = this.ti(newTypeEnv, e)
-        newTypeEnv = this.apply(newTypeEnv)(subst)
-    }
-    //On teste si le block doit renvoyer ou non une valeur
-    expectedType match {
-      case UnitType =>
-      case _        if returnMarker == NO_RETURN => throw AlgoTypeCheckingError(s"Erreur: Le block doit renvoyer une valeur de type '${expectedType.showType()}' mais il ne contient aucune instruction 'Return'.")
-      case _ =>
-    }
-    //On va tester ici, c'est-à-dire quand on finis de typecheck un block s'il reste dans le typeenv associé à ce block une variable dont le type n'a pas été inféré
-    //s'il en reste une alors sa déclaration est ambigüe et on le signale à l'utilisateur vià une erreur.
-    newTypeEnv.foreach(
-      {
-        case (id, (_, typeOf)) => if(this.ftv(typeOf).nonEmpty) throw AlgoTypeCheckingError(s"Erreur: Impossible de déduire le type de la variable '$id' (${typeOf.showType()})")
+        case ExprInstr(e) =>
+          val (subst, _) = this.ti(newTypeEnv, e)
+          newTypeEnv = this.apply(newTypeEnv)(subst)
+      }
+      //On teste si le block doit renvoyer ou non une valeur
+      expectedType match {
+        case UnitType =>
+        case _ if returnMarker == NO_RETURN => throw AlgoTypeCheckingError(s"Erreur: Le block doit renvoyer une valeur de type '${expectedType.showType()}' mais il ne contient aucune instruction 'Return'.")
+        case _ =>
+      }
+      //On va tester ici, c'est-à-dire quand on finis de typecheck un block s'il reste dans le typeenv associé à ce block une variable dont le type n'a pas été inféré
+      //s'il en reste une alors sa déclaration est ambigüe et on le signale à l'utilisateur vià une erreur.
+      newTypeEnv.foreach(
+        {
+          case (id, (_, typeOf)) => if (this.ftv(typeOf).nonEmpty) throw AlgoTypeCheckingError(s"Erreur: Impossible de déduire le type de la variable '$id' (${typeOf.showType()})")
+        })
     })
-
     returnMarker
   }
 
@@ -353,6 +354,8 @@ class WTypecheker {
   private def popEnv(): Unit = {
     if(this.typeEnvStack.size == 1) return
     val actual: TypeEnv = this.getCurrentTypeEnv
+    println("current type env")
+    printTypeEnv(actual)
     val parent = this.typeEnvStack(this.typeEnvStack.size-2)
     for((id, subst) <- actual) {
       if(parent.contains(id)) {
@@ -362,6 +365,9 @@ class WTypecheker {
         parent.addOne(id, this.apply(parentScheme)(newSubst))
       }
     }
+    this.typeEnvStack.remove(this.typeEnvStack.size-1)
+    println("new current type env")
+    printTypeEnv(getCurrentTypeEnv)
   }
 
 }
