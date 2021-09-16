@@ -207,8 +207,6 @@ class WTypecheker {
           case Some((_, typeOf)) => typeOf match {
             case FunctionType(parametersType, returnType) =>
               //debug
-              println("fonction")
-              printTypeEnv(typeEnv)
               //On s'assure en premier qu'on a donné assez d'arguments et qu'on n'en donne pas trop.
               if(parametersType.size != args.size) throw AlgoTypeCheckingError(s"Erreur: Nombre d'arguments incorrect pour la fonction '${functionName.value}', elle en demande ${parametersType.size} mais en reçoit ${args.size}")
               //Ensuite on s'assure que les types des arguments données correspondent bien à ce qu'attends la fonction
@@ -354,8 +352,6 @@ class WTypecheker {
   private def popEnv(): Unit = {
     if(this.typeEnvStack.size == 1) return
     val actual: TypeEnv = this.getCurrentTypeEnv
-    println("current type env")
-    printTypeEnv(actual)
     val parent = this.typeEnvStack(this.typeEnvStack.size-2)
     for((id, subst) <- actual) {
       if(parent.contains(id)) {
@@ -366,8 +362,6 @@ class WTypecheker {
       }
     }
     this.typeEnvStack.remove(this.typeEnvStack.size-1)
-    println("new current type env")
-    printTypeEnv(getCurrentTypeEnv)
   }
 
 }

@@ -62,7 +62,7 @@ case class IntegerValue(value: AtomicInteger) extends Value {
 
   override def mod(that: Value): Value = {
     that match {
-      case IntegerValue(value) => println(this.value.get() % value.get()); new IntegerValue(this.value.get() % value.get())
+      case IntegerValue(value) => new IntegerValue(this.value.get() % value.get())
       case _ => /* TODO: make error messages */ throw AlgoEvaluationError("")
     }
   }
