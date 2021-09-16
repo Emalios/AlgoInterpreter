@@ -24,8 +24,12 @@ package fr.emalios.algointerpreter.token
     override def toString: String = "reel"
   }
 
-  case class IntegerToken(number: Int) extends Literal
-  case class StringToken(value: String) extends Literal
+  case class IntegerToken(number: Int) extends Literal {
+    override def toString: String = number.toString
+  }
+  case class StringToken(value: String) extends Literal {
+    override def toString: String = value
+  }
   case class BooleanToken(value: Boolean) extends Literal
 
   case object InOut extends Token
