@@ -31,7 +31,7 @@ class AlgoParser extends Parsers {
 
   private def parseLiteral: Parser[Expression] = {
     if (devDebugMode) println("try to parse literal")
-    parseString ||| parseInteger ||| parseBoolean
+    parseString | parseInteger | parseBoolean
   }
 
   private def parseIdentifier: Parser[parser.Identifier] = {
@@ -41,7 +41,7 @@ class AlgoParser extends Parsers {
 
   private def parseUnary: Parser[Expression] = {
     if (devDebugMode) println("try to parse unary")
-    ( (Not ||| Minus) ~ parseExpression) ^^ { case operator ~ expression => operator match {
+    (Not | Minus) ~ parseExpression ^^ { case operator ~ expression => operator match {
       case operator: Operator => operator match {
         case operator: UnaryOperator => UnaryOperation(operator, expression)
       }
@@ -71,7 +71,7 @@ class AlgoParser extends Parsers {
    * @param sepToken token which separate left and right expressions
    * @return a BinaryOperation parser of type Parser[(Expression, Expression) => BinaryOperation]
    */
-  private def binOpParser(sepToken: Operator): BinOpParser = sepToken ^^^ binOp(sepToken)
+  private def binOpParser(sepToken: Operator): BinOpParser = sepToken ^^^ {case (left, right) => BinaryOperation(left, sepToken, right)}
 
   //Useful type used to parse BinaryOperation
   type BinOpParser = Parser[(Expression, Expression) => BinaryOperation]
@@ -104,7 +104,7 @@ class AlgoParser extends Parsers {
 
   private def parseExpression: Parser[Expression] = {
     if (devDebugMode) println("try to parse expression")
-    parseGrouping ||| parseBinary ||| parseUnary ||| parseFunctionCall ||| parseLiteral
+    parseBinary ||| parseGrouping ||| parseUnary ||| parseFunctionCall ||| parseLiteral
   }
 
   private def parseExprFunctionCall: Parser[ExprInstr] = {
@@ -128,7 +128,7 @@ class AlgoParser extends Parsers {
 
   private def parseAffectation: Parser[parser.Assignment] = {
     if (devDebugMode) println("try to parse affectation")
-    ( parseIdentifier ~ Affectation ~! parseExpression ) ^^ { case identifier ~ _ ~ expression => parser.Assignment(identifier, expression)}
+    (parseIdentifier ~ Affectation ~! parseExpression ) ^^ { case identifier ~ _ ~ expression => parser.Assignment(identifier, expression)}
   }
 
   private def parseReturn: Parser[parser.Return] = {
@@ -142,11 +142,11 @@ class AlgoParser extends Parsers {
   }
 
   private def parseForInstruction: Parser[ForInstruction] = {
-    (For ~> parseIdentifier <~ From) ~ (parseExpression <~ To) ~ (parseExpression <~ (Do ~ parseEndOfLine)) ~ ((parseInstruction*) <~ EndFor) ^^ { case identifier ~ from ~ to ~ block => ForInstruction(identifier, from, to, Block(block)) }
+    (For ~>! parseIdentifier <~! From) ~ (parseExpression <~ To) ~ (parseExpression <~ (Do ~ parseEndOfLine)) ~ ((parseInstruction*) <~ EndFor) ^^ { case identifier ~ from ~ to ~ block => ForInstruction(identifier, from, to, Block(block)) }
   }
 
   private def parseWhileInstruction: Parser[WhileInstruction] = {
-    (While ~> parseExpression <~ (Do ~ parseEndOfLine)) ~ (parseInstruction*) <~ EndWhile ^^ { case condition ~ block => WhileInstruction(condition, Block(block)) }
+    (While ~>! parseExpression <~! (Do ~ parseEndOfLine)) ~ (parseInstruction*) <~ EndWhile ^^ { case condition ~ block => WhileInstruction(condition, Block(block)) }
   }
 
   private def parseIfThenElseInstruction: Parser[IfThenElseInstruction] = {
